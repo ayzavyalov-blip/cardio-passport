@@ -160,13 +160,13 @@ const RD = {
 
 // ─── ДЕФОЛТНЫЕ ДАННЫЕ ─────────────────────────────────────────────────────────
 const DEFAULT_FORM = {
-  age: 21,
+  age: '21',
   family_cvd: 'Нет', family_pe: 'Нет',
   spky: 'Нет', coc: 'Нет', bp_measured: 'Да', migraine: 'Нет',
-  smoke: 'Нет', sleep: '7–9 часов', active_min: 150,
+  smoke: 'Нет', sleep: '7–9 часов', active_min: '150',
   figo_veg: 'Достаточно', figo_fastfood: 'Нет', folate: 'Да',
-  height: 165, weight: 65, waist: 75,
-  sys1: 120, dia1: 80, sys2: 122, dia2: 82, sys3: 118, dia3: 78,
+  height: '165', weight: '65', waist: '75',
+  sys1: '120', dia1: '80', sys2: '122', dia2: '82', sys3: '118', dia3: '78',
   labs_status: 'not_filled',
   cholesterol: '', uric_acid: '', albumin: '',
 };
@@ -439,7 +439,7 @@ export default function App() {
     }
   }, [view, scoring, role, valid, metrics, form]);
 
-  const isOutlier = form.age < RD.target_age.min || form.age > RD.target_age.max;
+  const isOutlier = Number(form.age) < RD.target_age.min || Number(form.age) > RD.target_age.max;
 
   // ── HEADER ──────────────────────────────────────────────────────────────────
   const Header = () => (
@@ -645,8 +645,8 @@ export default function App() {
         {isOutlier && <span className="text-[10px] text-amber-600 font-black bg-amber-50 px-2 py-1 rounded-lg shrink-0">Возраст вне нормы</span>}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-28">
-        <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-28" style={{overscrollBehavior:'contain'}}>
+        <div className="max-w-3xl mx-auto space-y-6" key={`step-${step}`}>
 
           {step === 1 && (
             <div className="space-y-6">
@@ -655,7 +655,7 @@ export default function App() {
                 <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Общие сведения</h3>
                 <div className="w-36">
                   <label className={lbl}>Возраст (лет)</label>
-                  <input type="number" inputMode="numeric" value={form.age} onChange={e=>f({age:Number(e.target.value)})} className={`${inp} text-center text-2xl font-black ${errBorder('age')}`}/>
+                  <input type="number" inputMode="numeric" value={form.age} onChange={e=>f({age:e.target.value})} className={`${inp} text-center text-2xl font-black ${errBorder('age')}`}/>
                   <Err k="age"/>
                 </div>
               </div>
