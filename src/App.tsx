@@ -1045,36 +1045,24 @@ export default function App() {
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Рекомендации по выявленным проблемам</p>
                     {scoring.activeRecs.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left border-collapse min-w-[480px]">
-                          <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <tr>
-                              <th className="p-3 rounded-tl-xl w-1/3">Выявленная проблема</th>
-                              <th className="p-3 rounded-tr-xl">Конкретные действия</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {scoring.activeRecs.map((r, i) => (
-                              <tr key={i} className="align-top">
-                                <td className="p-3">
-                                  <p className="font-black text-xs text-blue-700 uppercase mb-1">{r.domain}</p>
-                                  <p className="text-xs text-slate-600 leading-relaxed italic">{r.problem}</p>
-                                  <p className="text-[9px] text-slate-400 mt-2">Источник: {r.src}</p>
-                                </td>
-                                <td className="p-3">
-                                  <ul className="space-y-1.5">
-                                    {r.actions.map((act, j) => (
-                                      <li key={j} className="flex gap-2 text-xs text-slate-700 leading-relaxed">
-                                        <span className="text-blue-500 font-black shrink-0 mt-0.5">→</span>
-                                        <span>{act}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                      <div className="space-y-4">
+                        {scoring.activeRecs.map((r, i) => (
+                          <div key={i} className="border border-slate-100 rounded-xl overflow-hidden">
+                            <div className="bg-slate-50 px-4 py-3 border-b border-slate-100">
+                              <p className="font-black text-xs text-blue-700 uppercase">{r.domain}</p>
+                              <p className="text-xs text-slate-500 italic mt-0.5">{r.problem}</p>
+                            </div>
+                            <ul className="p-4 space-y-2">
+                              {r.actions.map((act, j) => (
+                                <li key={j} className="flex gap-2 text-xs text-slate-700 leading-relaxed">
+                                  <span className="text-blue-500 font-black shrink-0 mt-0.5">→</span>
+                                  <span>{act}</span>
+                                </li>
+                              ))}
+                              <li className="text-[9px] text-slate-400 pt-1">Источник: {r.src}</li>
+                            </ul>
+                          </div>
+                        ))}
                       </div>
                     ) : <p className="text-sm text-slate-400 italic">Рекомендаций нет — факторы риска не выявлены</p>}
                   </div>
@@ -1093,27 +1081,30 @@ export default function App() {
 
                   {scoring.breakdown.length > 0 ? (
                     <div className="overflow-x-auto">
-                      <table className="w-full text-sm text-left border-collapse min-w-[500px]">
+                      <table className="w-full text-sm text-left border-collapse">
                         <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest">
                           <tr>
                             <th className="p-4 rounded-tl-xl">Клинический фактор</th>
-                            <th className="p-4">Домен</th>
+                            <th className="p-4 hidden sm:table-cell">Домен</th>
                             <th className="p-4 text-right rounded-tr-xl">Баллы</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                           {scoring.breakdown.map((it,i) => (
                             <tr key={i} className="hover:bg-slate-50 transition">
-                              <td className="p-4 text-slate-800 font-bold">{it.factor}</td>
-                              <td className="p-4 font-black text-blue-600 text-xs">[{it.d}] {RD.domains[it.d].name}</td>
+                              <td className="p-4 text-slate-800 font-bold">
+                                {it.factor}
+                                <span className="block sm:hidden text-[10px] text-blue-500 font-black mt-0.5">[{it.d}] {RD.domains[it.d].name}</span>
+                              </td>
+                              <td className="p-4 font-black text-blue-600 text-xs hidden sm:table-cell">[{it.d}] {RD.domains[it.d].name}</td>
                               <td className="p-4 text-right font-black text-slate-900">+{it.pts}</td>
                             </tr>
                           ))}
                         </tbody>
                         <tfoot className="bg-blue-50 border-t-2 border-blue-200">
                           <tr>
-                            <td colSpan="2" className="p-4 font-black text-blue-900 text-right uppercase tracking-widest">Итоговый интегральный балл:</td>
-                            <td className="p-4 text-right font-black text-3xl text-blue-700">{scoring.total}</td>
+                            <td colSpan={2} className="p-4 font-black text-blue-900 text-right uppercase tracking-widest text-xs sm:text-sm">Итоговый интегральный балл:</td>
+                            <td className="p-4 text-right font-black text-2xl md:text-3xl text-blue-700">{scoring.total}</td>
                           </tr>
                         </tfoot>
                       </table>
