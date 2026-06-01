@@ -655,7 +655,7 @@ export default function App() {
                 <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Общие сведения</h3>
                 <div className="w-36">
                   <label className={lbl}>Возраст (лет)</label>
-                  <input type="number" inputMode="numeric" value={form.age} onChange={e=>f({age:e.target.value})} className={`${inp} text-center text-2xl font-black ${errBorder('age')}`}/>
+                  <input type="text" inputMode="numeric" value={form.age} onChange={e=>f({age:e.target.value})} className={`${inp} text-center text-2xl font-black ${errBorder('age')}`}/>
                   <Err k="age"/>
                 </div>
               </div>
@@ -708,7 +708,7 @@ export default function App() {
                   <div><label className={lbl}>Фолиевая кислота (дотация фолатов)</label><select value={form.folate} onChange={e=>f({folate:e.target.value})} className={sel}><option value="Да">Да, принимаю</option><option value="Нет">Нет</option></select></div>
                   <div>
                     <label className={lbl}>Физическая активность (мин/нед)</label>
-                    <input type="number" inputMode="numeric" value={form.active_min} onChange={e=>f({active_min:e.target.value})} className={`${inp} ${errBorder('active_min')}`} placeholder="Напр. 150"/>
+                    <input type="text" inputMode="numeric" value={form.active_min} onChange={e=>f({active_min:e.target.value})} className={`${inp} ${errBorder('active_min')}`} placeholder="Напр. 150"/>
                     <Err k="active_min"/>
                   </div>
                 </div>
@@ -732,7 +732,7 @@ export default function App() {
                   {[{k:'height',l:'Рост (см)'},{k:'weight',l:'Вес (кг)'},{k:'waist',l:'Талия (см)'}].map(({k,l}) => (
                     <div key={k}>
                       <label className={lbl}>{l}</label>
-                      <input type="number" inputMode="numeric" value={form[k]} onChange={e=>f({[k]:e.target.value})} className={`${inp} text-center text-xl font-black ${errBorder(k)}`}/>
+                      <input type="text" inputMode="numeric" value={form[k]} onChange={e=>f({[k]:e.target.value})} className={`${inp} text-center text-xl font-black ${errBorder(k)}`}/>
                       <Err k={k}/>
                     </div>
                   ))}
@@ -755,12 +755,12 @@ export default function App() {
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Измерение {i}</p>
                       <div className="flex gap-2 items-center">
                         <div className="w-full">
-                          <input type="number" inputMode="numeric" placeholder="САД" value={form[`sys${i}`]} onChange={e=>f({[`sys${i}`]:e.target.value})} className={`w-full p-2.5 border rounded-lg font-black text-center outline-none focus:border-blue-500 text-sm no-spin ${valid.fe[`sys${i}`] ? 'border-red-400 bg-red-50' : 'bg-white'}`}/>
+                          <input type="text" inputMode="numeric" placeholder="САД" value={form[`sys${i}`]} onChange={e=>f({[`sys${i}`]:e.target.value})} className={`w-full p-2.5 border rounded-lg font-black text-center outline-none focus:border-blue-500 text-sm no-spin ${valid.fe[`sys${i}`] ? 'border-red-400 bg-red-50' : 'bg-white'}`}/>
                           <Err k={`sys${i}`}/>
                         </div>
                         <span className="text-slate-300 font-black shrink-0">/</span>
                         <div className="w-full">
-                          <input type="number" inputMode="numeric" placeholder="ДАД" value={form[`dia${i}`]} onChange={e=>f({[`dia${i}`]:e.target.value})} className={`w-full p-2.5 border rounded-lg font-black text-center outline-none focus:border-blue-500 text-sm no-spin ${valid.fe[`dia${i}`] ? 'border-red-400 bg-red-50' : 'bg-white'}`}/>
+                          <input type="text" inputMode="numeric" placeholder="ДАД" value={form[`dia${i}`]} onChange={e=>f({[`dia${i}`]:e.target.value})} className={`w-full p-2.5 border rounded-lg font-black text-center outline-none focus:border-blue-500 text-sm no-spin ${valid.fe[`dia${i}`] ? 'border-red-400 bg-red-50' : 'bg-white'}`}/>
                           <Err k={`dia${i}`}/>
                         </div>
                       </div>
@@ -795,7 +795,7 @@ export default function App() {
                       <div key={k} className="space-y-1.5">
                         <label className={lbl}>{l}</label>
                         <div className="relative">
-                          <input type="number" inputMode="decimal" value={form[k]} onChange={e=>f({[k]:e.target.value, labs_status:'filled'})}
+                          <input type="text" inputMode="decimal" value={form[k]} onChange={e=>f({[k]:e.target.value, labs_status:'filled'})}
                             className={`${inp} pr-14 text-lg font-black text-center ${errBorder(k)}`}/>
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-bold">{unit}</span>
                         </div>
