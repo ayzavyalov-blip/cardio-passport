@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Activity, AlertTriangle, History, CheckCircle2, AlertCircle, Clock,
   ArrowRight, ShieldAlert, FileDown, Shield, List, Save, Network, Database,
@@ -240,6 +240,33 @@ function DomainBar({ label, letter, score, max }) {
 }
 
 // ─── ОСНОВНОЕ ПРИЛОЖЕНИЕ ──────────────────────────────────────────────────────
+// ─── СТАБИЛЬНЫЙ ЧИСЛОВОЙ ИНПУТ ───────────────────────────────────────────────
+// Вынесен за пределы App чтобы не пересоздаваться при каждом рендере родителя.
+// Это ключевое исправление для Android Chrome — без него фокус теряется при вводе.
+const NumInput = React.memo(function NumInput({
+  value, onChange, className, placeholder, mode = 'numeric'
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+  placeholder?: string;
+  mode?: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <input
+      ref={ref}
+      type="text"
+      inputMode={mode as any}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className={className}
+      placeholder={placeholder}
+      autoComplete="off"
+    />
+  );
+});
+
 export default function App() {
   const [view, setView]         = useState('dashboard');
   const [role, setRole]         = useState('Врач');
@@ -251,7 +278,7 @@ export default function App() {
   const [history, setHistory]   = useState([]);
   const [calcHistory, setCalcHistory] = useState([]);
   const [showSources, setShowSources] = useState(false);
-  const f = (patch) => setForm(prev => ({...prev, ...patch}));
+  const f = useCallback((patch) => setForm(prev => ({...prev, ...patch})), []);
 
   // ── МЕТРИКИ ─────────────────────────────────────────────────────────────────
   const metrics = useMemo(() => {
@@ -646,7 +673,7 @@ export default function App() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-28" style={{overscrollBehavior:'contain'}}>
-        <div className="max-w-3xl mx-auto space-y-6" key={`step-${step}`}>
+        <div className="max-w-3xl mx-auto space-y-6">
 
           {step === 1 && (
             <div className="space-y-6">
@@ -655,7 +682,7 @@ export default function App() {
                 <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Общие сведения</h3>
                 <div className="w-36">
                   <label className={lbl}>Возраст (лет)</label>
-                  <input type="text" inputMode="numeric" value={form.age} onChange={e=>f({age:e.target.value})} className={`${inp} text-center text-2xl font-black ${errBorder('age')}`}/>
+                  <NumInput value={form.age} onChange={v=>f({age:v})} className={`${inp} text-center text-2xl font-black ${errBorder('age')}`}/>
                   <Err k="age"/>
                 </div>
               </div>
@@ -708,7 +735,7 @@ export default function App() {
                   <div><label className={lbl}>Фолиевая кислота (дотация фолатов)</label><select value={form.folate} onChange={e=>f({folate:e.target.value})} className={sel}><option value="Да">Да, принимаю</option><option value="Нет">Нет</option></select></div>
                   <div>
                     <label className={lbl}>Физическая активность (мин/нед)</label>
-                    <input type="text" inputMode="numeric" value={form.active_min} onChange={e=>f({active_min:e.target.value})} className={`${inp} ${errBorder('active_min')}`} placeholder="Напр. 150"/>
+                    <NumInput value={form.active_min} onChange={v=>f({active_min:v})} className={`${inp} ${errBorder('active_min')}`} placeholder="Напр. 150"/>
                     <Err k="active_min"/>
                   </div>
                 </div>
@@ -732,7 +759,7 @@ export default function App() {
                   {[{k:'height',l:'Рост (см)'},{k:'weight',l:'Вес (кг)'},{k:'waist',l:'Талия (см)'}].map(({k,l}) => (
                     <div key={k}>
                       <label className={lbl}>{l}</label>
-                      <input type="text" inputMode="numeric" value={form[k]} onChange={e=>f({[k]:e.target.value})} className={`${inp} text-center text-xl font-black ${errBorder(k)}`}/>
+                      <NumInput value={form[k]} onChange={v=>f({[k]:v})} className={`${inp} text-center text-xl font-black ${errBorder(k)}`}/>
                       <Err k={k}/>
                     </div>
                   ))}
@@ -755,12 +782,12 @@ export default function App() {
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Измерение {i}</p>
                       <div className="flex gap-2 items-center">
                         <div className="w-full">
-                          <input type="text" inputMode="numeric" placeholder="САД" value={form[`sys${i}`]} onChange={e=>f({[`sys${i}`]:e.target.value})} className={`w-full p-2.5 border rounded-lg font-black text-center outline-none focus:border-blue-500 text-sm no-spin ${valid.fe[`sys${i}`] ? 'border-red-400 bg-red-50' : 'bg-white'}`}/>
+                          <NumInput value={form[`sys${i}`]} onChange={v=>f({[`sys${i}`]:v})} placeholder="САД" className={`w-full p-2.5 border rounded-lg font-black text-center outline-none focus:border-blue-500 text-sm ${valid.fe[`sys${i}`] ? 'border-red-400 bg-red-50' : 'bg-white'}`}/>
                           <Err k={`sys${i}`}/>
                         </div>
                         <span className="text-slate-300 font-black shrink-0">/</span>
                         <div className="w-full">
-                          <input type="text" inputMode="numeric" placeholder="ДАД" value={form[`dia${i}`]} onChange={e=>f({[`dia${i}`]:e.target.value})} className={`w-full p-2.5 border rounded-lg font-black text-center outline-none focus:border-blue-500 text-sm no-spin ${valid.fe[`dia${i}`] ? 'border-red-400 bg-red-50' : 'bg-white'}`}/>
+                          <NumInput value={form[`dia${i}`]} onChange={v=>f({[`dia${i}`]:v})} placeholder="ДАД" className={`w-full p-2.5 border rounded-lg font-black text-center outline-none focus:border-blue-500 text-sm ${valid.fe[`dia${i}`] ? 'border-red-400 bg-red-50' : 'bg-white'}`}/>
                           <Err k={`dia${i}`}/>
                         </div>
                       </div>
@@ -795,7 +822,8 @@ export default function App() {
                       <div key={k} className="space-y-1.5">
                         <label className={lbl}>{l}</label>
                         <div className="relative">
-                          <input type="text" inputMode="decimal" value={form[k]} onChange={e=>f({[k]:e.target.value, labs_status:'filled'})}
+                          <NumInput value={form[k]} onChange={v=>f({[k]:v, labs_status:'filled'})}
+                            mode="decimal"
                             className={`${inp} pr-14 text-lg font-black text-center ${errBorder(k)}`}/>
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-bold">{unit}</span>
                         </div>
