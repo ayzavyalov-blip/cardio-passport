@@ -9,7 +9,7 @@ import {
 // ─── СПРАВОЧНИК ПРАВИЛ ────────────────────────────────────────────────────────
 const RD = {
   version: "7.1",
-  target_age: { min: 18, max: 23 },
+  target_age: { min: 22, max: 25 },
   domains: {
     A: { name: "Семейный анамнез", max: 10 },
     B: { name: "Репродуктивный статус", max: 12 },
@@ -21,7 +21,7 @@ const RD = {
     H: { name: "Лабораторные данные", max: 15 },
   },
   validation: {
-    age:         { min: 15, max: 50,   label: "Возраст (лет)" },
+    age:         { min: 22, max: 25,   label: "Возраст (лет)" },
     height:      { min: 140, max: 220, label: "Рост (см)" },
     weight:      { min: 35, max: 200,  label: "Вес (кг)" },
     waist:       { min: 50, max: 150,  label: "Талия (см)" },
@@ -160,7 +160,7 @@ const RD = {
 
 // ─── ДЕФОЛТНЫЕ ДАННЫЕ ─────────────────────────────────────────────────────────
 const DEFAULT_FORM = {
-  age: '21',
+  age: '22',
   family_cvd: 'Нет', family_pe: 'Нет',
   spky: 'Нет', coc: 'Нет', bp_measured: 'Да', migraine: 'Нет',
   smoke: 'Нет', sleep: '7–9 часов', active_min: '150',
@@ -308,10 +308,10 @@ export default function App() {
     const labInt = {};
     const vr = RD.validation;
 
-    // Шаг 1: возраст и активность
+    // Шаг 1: возраст — жёсткая блокировка если вне 22-25
     const age = Number(form.age);
-    if (age && (age < vr.age.min || age > vr.age.max))
-      fe.age = `${vr.age.min}–${vr.age.max} лет`;
+    if (!age || age < vr.age.min || age > vr.age.max)
+      fe.age = `Доступно только для ${vr.age.min}–${vr.age.max} лет`;
 
     const am = Number(form.active_min);
     if (form.active_min !== '' && (am < 0 || am > 10000))
@@ -508,7 +508,7 @@ export default function App() {
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5"/>
             <div>
               <p className="text-sm font-black text-amber-900">Возраст вне целевой группы</p>
-              <p className="text-xs text-amber-700 mt-1">Алгоритм валидирован для женщин <b>18–23 лет</b>. Текущий возраст: {form.age} лет.</p>
+              <p className="text-xs text-amber-700 mt-1">Алгоритм валидирован для женщин <b>22–25 лет</b>. Текущий возраст: {form.age} лет.</p>
             </div>
           </div>
         )}
@@ -516,7 +516,7 @@ export default function App() {
         {/* Hero */}
         <div className="bg-gradient-to-br from-slate-900 to-blue-950 rounded-2xl md:rounded-3xl p-6 md:p-12 text-white relative overflow-hidden">
           <Activity className="absolute right-0 top-0 w-64 h-64 -mt-16 -mr-16 opacity-5"/>
-          <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-200 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-400/30 mb-4">Для женщин 18–23 лет</span>
+          <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-200 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-400/30 mb-4">Для женщин 22–25 лет</span>
           <h2 className="text-2xl md:text-4xl font-black mb-3 tracking-tight">Прегравидарный скрининг рисков</h2>
           <p className="text-slate-300 mb-6 md:mb-8 text-sm md:text-base leading-relaxed max-w-xl">Клинический инструмент ранней оценки кардио-метаболических, нутритивных и репродуктивных рисков перед планированием беременности.</p>
           <button onClick={() => { setView('wizard'); setStep(1); setTab('summary'); setReport(''); }}
@@ -696,6 +696,7 @@ export default function App() {
                   <label className={lbl}>Возраст (лет)</label>
                   <NumInput value={form.age} onChange={v=>f({age:v})} className={`${inp} text-center text-2xl font-black ${errBorder('age')}`}/>
                   <Err k="age"/>
+                  {!valid.fe.age && <p className="mt-1 text-[10px] text-green-600 font-bold">✓ Возраст в допустимом диапазоне</p>}
                 </div>
               </div>
 
