@@ -241,8 +241,10 @@ function DomainBar({ label, letter, score, max }) {
 
 // ─── ОСНОВНОЕ ПРИЛОЖЕНИЕ ──────────────────────────────────────────────────────
 // ─── СТАБИЛЬНЫЙ ЧИСЛОВОЙ ИНПУТ ───────────────────────────────────────────────
-// Вынесен за пределы App чтобы не пересоздаваться при каждом рендере родителя.
-// Это ключевое исправление для Android Chrome — без него фокус теряется при вводе.
+// Ключевое решение для Android Chrome:
+// - Хранит значение в ЛОКАЛЬНОМ useState — ни один внешний рендер не трогает поле
+// - Обновляет родителя только onBlur (когда пользователь уходит с поля)
+// - Синхронизируется с внешним value только если пользователь не в фокусе
 const NumInput = React.memo(function NumInput({
   value, onChange, className, placeholder, mode = 'numeric'
 }: {
@@ -252,17 +254,27 @@ const NumInput = React.memo(function NumInput({
   placeholder?: string;
   mode?: string;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
+  const [local, setLocal] = useState(value);
+  const focused = useRef(false);
+
+  // Синхронизировать извне только если поле не в фокусе
+  useEffect(() => {
+    if (!focused.current) setLocal(value);
+  }, [value]);
+
   return (
     <input
-      ref={ref}
       type="text"
       inputMode={mode as any}
-      value={value}
-      onChange={e => onChange(e.target.value)}
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onFocus={() => { focused.current = true; }}
+      onBlur={() => { focused.current = false; onChange(local); }}
       className={className}
       placeholder={placeholder}
       autoComplete="off"
+      autoCorrect="off"
+      spellCheck={false}
     />
   );
 });
@@ -514,7 +526,7 @@ export default function App() {
         </div>
 
         {/* 4 карточки */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {[
             { icon: HeartPulse, color:'text-rose-500', bg:'bg-rose-50', title:'Кардиометаболический риск', items:['Масса тела и ИМТ','Окружность талии','Артериальное давление','Липидный профиль'] },
             { icon: Baby, color:'text-purple-500', bg:'bg-purple-50', title:'Репродуктивный риск', items:['СПКЯ','Нарушения цикла','КОК и сосудистый риск'] },
@@ -672,7 +684,7 @@ export default function App() {
         {isOutlier && <span className="text-[10px] text-amber-600 font-black bg-amber-50 px-2 py-1 rounded-lg shrink-0">Возраст вне нормы</span>}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-28" style={{overscrollBehavior:'contain'}}>
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-36" style={{overscrollBehavior:'contain'}}>
         <div className="max-w-3xl mx-auto space-y-6">
 
           {step === 1 && (
@@ -870,7 +882,7 @@ export default function App() {
       </div>
 
       {/* Навигация */}
-      <div className="bg-white border-t p-4 md:px-8 flex justify-between items-center shrink-0 shadow-lg z-20">
+      <div className="bg-white border-t p-4 md:px-8 flex justify-between items-center shrink-0 shadow-lg z-20" style={{paddingBottom:'max(1rem, env(safe-area-inset-bottom))'}}>
         <button onClick={() => step===1 ? setView('dashboard') : setStep(step-1)}
           className="px-6 py-3 border-2 border-slate-200 rounded-xl text-xs font-black uppercase text-slate-500 hover:bg-slate-50 transition">Назад</button>
         {step < 3 ? (
@@ -1266,7 +1278,7 @@ export default function App() {
 
   // ── РЕНДЕР ───────────────────────────────────────────────────────────────────
   return (
-    <div className="h-screen flex flex-col bg-slate-50 text-slate-900 overflow-hidden">
+    <div className="flex flex-col bg-slate-50 text-slate-900 overflow-hidden" style={{height:'100dvh'}}>
       <style>{`
         .no-spin::-webkit-outer-spin-button,
         .no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
