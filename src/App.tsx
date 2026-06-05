@@ -30,22 +30,34 @@ const RD = {
     cholesterol: { min: 1.0, max: 20.0,label: "Холестерин (ммоль/л)" },
     uric_acid:   { min: 50, max: 1200, label: "Мочевая кислота (мкмоль/л)" },
     albumin:     { min: 15, max: 70,   label: "Альбумин (г/л)" },
+    tsh:         { min: 0.01, max: 50, label: "ТТГ (мЕд/л)" },
+    glucose:     { min: 1.0, max: 30,  label: "Глюкоза (ммоль/л)" },
+    ferritin:    { min: 1, max: 2000,  label: "Ферритин (мкг/л)" },
   },
   lab_ref: {
     cholesterol: { hi: 5.2,  unit: "ммоль/л" },
-    uric_acid:   { hi: 357,  lo: 155, unit: "мкмоль/л" },
+    uric_acid:   { hi: 360,  lo: 155, unit: "мкмоль/л" },
     albumin:     { lo: 35,   hi: 52,  unit: "г/л" },
+    tsh:         { lo: 0.4,  hi: 2.5, unit: "мЕд/л" },
+    glucose:     { hi: 5.6,  unit: "ммоль/л" },
+    ferritin:    { lo: 30,   unit: "мкг/л" },
   },
   red_flags: [
-    { id:"RF-001", cond:(d,m)=> m.avgSys>=160||m.avgDia>=100, level:"Красный", urgency:"24–72 часа", title:"Критическое артериальное давление", action:"Срочная очная консультация кардиолога", desc:"САД ≥ 160 или ДАД ≥ 100 мм рт.ст." },
-    { id:"RF-003", cond:(d,m)=> d.coc==='Да'&&d.migraine==='С аурой'&&d.smoke==='Да', level:"Красный", urgency:"24–72 часа", title:"Тройной сосудистый риск", action:"Немедленная отмена КОК, срочная консультация", desc:"КОК + Мигрень с аурой + Никотин" },
-    { id:"RF-005", cond:(d,m)=> (m.avgSys>=140&&m.avgSys<160)||(m.avgDia>=90&&m.avgDia<100), level:"Оранжевый", urgency:"До 1 месяца", title:"Клинически значимое АД", action:"Приоритетная кардиологическая оценка", desc:"АД ≥ 140/90 мм рт.ст." },
-    { id:"RF-008", cond:(d,m)=> m.nutritionRisk&&d.albumin&&Number(d.albumin)<35, level:"Оранжевый", urgency:"До 1 месяца", title:"Выраженный нутритивный дефицит", action:"Коррекция белкового статуса под контролем нутрициолога", desc:"Неблагоприятный нутрипрофиль FIGO + Альбумин < 35 г/л" },
+    { id:"RF-000", cond:(d,m)=> m.avgSys>=180||m.avgDia>=110, level:"Красный", urgency:"Экстренно", title:"Гипертонический криз / АГ 3 ст.", action:"Немедленный вызов скорой помощи или самостоятельное обращение в приёмный покой", desc:"САД ≥ 180 или ДАД ≥ 110 мм рт.ст." },
+    { id:"RF-001", cond:(d,m)=> (m.avgSys>=160&&m.avgSys<180)||(m.avgDia>=100&&m.avgDia<110), level:"Красный", urgency:"В день выявления", title:"АГ 2 ст. — срочная оценка", action:"Очная консультация кардиолога в день выявления; не откладывать", desc:"САД 160–179 или ДАД 100–109 мм рт.ст." },
+    { id:"RF-002", cond:(d,m)=> d.coc==='Да'&&(m.avgSys>=140||m.avgDia>=90), level:"Красный", urgency:"В день выявления", title:"КОК при АГ — абсолютное противопоказание", action:"Немедленная отмена КОК, подбор альтернативной контрацепции, консультация гинеколога", desc:"КОК + АД ≥ 140/90 мм рт.ст. (ВОЗ MEC категория 4)" },
+    { id:"RF-003", cond:(d,m)=> d.coc==='Да'&&d.migraine==='С аурой'&&d.smoke==='Да', level:"Красный", urgency:"В день выявления", title:"Тройной сосудистый риск", action:"Немедленная отмена КОК, срочная консультация", desc:"КОК + Мигрень с аурой + Никотин" },
+    { id:"RF-005", cond:(d,m)=> (m.avgSys>=140&&m.avgSys<160)||(m.avgDia>=90&&m.avgDia<100), level:"Оранжевый", urgency:"До 2 недель", title:"АГ 1 ст. — приоритетная оценка", action:"Консультация кардиолога до зачатия обязательна; домашний мониторинг АД", desc:"АД 140–159/90–99 мм рт.ст." },
+    { id:"RF-006", cond:(d,m)=> Number(d.miscarriages)>=2, level:"Оранжевый", urgency:"До 1 месяца", title:"Привычное невынашивание", action:"Обследование на тромбофилию: АФС, коагулограмма; консультация гематолога и акушера-гинеколога", desc:"≥ 2 самопроизвольных выкидышей в анамнезе" },
+    { id:"RF-008", cond:(d,m)=> d.albumin&&Number(d.albumin)<35, level:"Оранжевый", urgency:"До 1 месяца", title:"Выраженный нутритивный дефицит", action:"Коррекция белкового статуса; при альбумине < 30 г/л — консультация гастроэнтеролога/нефролога", desc:"Альбумин < 35 г/л" },
   ],
   critical_combinations: [
     { id:"CC-001", cond:(d,m)=> d.coc==='Да'&&d.migraine==='С аурой', effect:"+1 ступень риска", title:"КОК + Мигрень с аурой" },
     { id:"CC-004", cond:(d,m)=> d.spky==='Да'&&Number(d.waist)>=80, effect:"+1 ступень риска", title:"СПКЯ + Абдоминальное ожирение" },
     { id:"CC-011", cond:(d,m)=> Number(d.uric_acid)>360&&m.avgSys>=130, effect:"+1 ступень риска", title:"Гиперурикемия + Повышенное АД" },
+    { id:"CC-012", cond:(d,m)=> d.smoke==='Да'&&m.bmi>=30, effect:"+1 ступень риска", title:"Курение + Ожирение" },
+    { id:"CC-013", cond:(d,m)=> d.migraine==='С аурой'&&m.bmi>=30, effect:"+1 ступень риска", title:"Мигрень с аурой + Ожирение" },
+    { id:"CC-014", cond:(d,m)=> d.spky==='Да'&&Number(d.uric_acid)>360, effect:"+1 ступень риска", title:"СПКЯ + Гиперурикемия" },
   ],
   recs: [
     {
@@ -91,18 +103,32 @@ const RD = {
     },
     {
       domain:"Контроль АД",
-      problem:"АД ≥ 130/80 мм рт.ст. — тенденция к повышению",
-      cond:(d,m)=>m.avgSys>=130||m.avgDia>=80,
+      problem:"АД ≥ 130/85 мм рт.ст. — тенденция к повышению",
+      cond:(d,m)=>(m.avgSys>=130&&m.avgSys<140)||(m.avgDia>=85&&m.avgDia<90),
       actions:[
-        "Провести суточное мониторирование АД (СМАД) для исключения маскированной гипертензии и гипертензии белого халата",
-        "Вести домашний дневник АД: измерять утром (через 1 ч после подъёма) и вечером, сидя, после 5 мин отдыха, в течение 7 дней",
-        "Исключить вторичные причины гипертензии: УЗИ почек, анализ мочи, ТТГ, уровень альдостерона/ренина",
-        "Ограничить потребление натрия: < 5 г поваренной соли в сутки (не досаливать пищу, избегать консервов и полуфабрикатов)",
-        "Увеличить потребление калия: бананы, картофель, авокадо, шпинат — антагонизм с натрием снижает АД",
-        "Беременность при АД ≥ 130/80 требует мультидисциплинарного ведения; консультация кардиолога до зачатия",
+        "Домашний мониторинг АД: измерять утром и вечером в течение 7 дней, сидя, после 5 мин отдыха — для оценки вне медицинского учреждения",
+        "Ограничить натрий: < 5 г/сут поваренной соли; исключить консервы, полуфабрикаты, досаливание пищи",
+        "Увеличить потребление калия: бананы, картофель, авокадо, шпинат (антагонизм с натрием снижает АД)",
+        "Коррекция образа жизни: физическая активность ≥ 150 мин/нед, отказ от курения, нормализация веса",
+        "Повторная оценка АД через 3 месяца; при нарастании — консультация кардиолога",
       ],
-      pat:"Измеряйте АД утром и вечером 7 дней подряд и записывайте показания. Ограничьте соль, ешьте больше овощей и фруктов. Запишитесь на консультацию к врачу.",
-      src:"КР МЗ РФ «Преэклампсия. Эклампсия» 2021",
+      pat:"Ваше давление немного выше нормы. Измеряйте его утром и вечером в течение недели и запишите результаты. Ограничьте соль и ешьте больше овощей — это поможет без таблеток.",
+      src:"КР МЗ РФ «АГ у взрослых» 2020",
+    },
+    {
+      domain:"Прегравидарная подготовка в норме",
+      problem:"Основные факторы риска не выявлены",
+      cond:(d,m)=>m.avgSys<130&&m.avgDia<85&&m.bmi>=18.5&&m.bmi<25&&Number(d.waist)<80&&d.smoke==='Нет'&&d.folate==='Да'&&d.figo_veg==='Достаточно'&&d.figo_fastfood==='Нет'&&Number(d.active_min)>=150&&d.migraine!=='С аурой'&&Number(d.miscarriages)<2,
+      actions:[
+        "Продолжать приём фолиевой кислоты 400 мкг/сут и йодида калия 200–250 мкг/сут до наступления беременности и в I триместре",
+        "Поддерживать физическую активность ≥ 150 мин/нед; оптимально — умеренные аэробные нагрузки (ходьба, плавание)",
+        "Сбалансированное питание по принципам средиземноморской диеты: рыба ≥ 2 раз/нед, овощи, фрукты, цельнозерновые",
+        "Контроль АД, массы тела и менструального цикла: ежеквартально",
+        "Плановый осмотр акушера-гинеколога до зачатия: консультация по срокам, анализы (ОАК, ОАМ, мазок), вакцинация",
+        "Повторная оценка рисков: через 3–6 месяцев или при изменении состояния здоровья",
+      ],
+      pat:"Ваш профиль в норме — это отличный старт для планирования беременности! Продолжайте принимать фолиевую кислоту, питайтесь разнообразно, двигайтесь и запишитесь к гинекологу для плановой подготовки.",
+      src:"Протокол МАРС «Прегравидарная подготовка» 2024; КР МЗ РФ «Нормальная беременность» 2023",
     },
     {
       domain:"Масса тела",
@@ -151,15 +177,29 @@ const RD = {
   sources: [
     { short:"КР МЗ РФ «Нормальная беременность» 2023", full:"Клинические рекомендации МЗ РФ «Нормальная беременность», утв. 2023 г." },
     { short:"КР МЗ РФ «Преэклампсия. Эклампсия» 2021", full:"Клинические рекомендации МЗ РФ «Преэклампсия. Эклампсия. Отёки, протеинурия и гипертензивные расстройства во время беременности, в родах и послеродовом периоде», утв. 2021 г." },
+    { short:"КР МЗ РФ «АГ у взрослых» 2020", full:"Клинические рекомендации МЗ РФ «Артериальная гипертензия у взрослых», утв. 2020 г." },
+    { short:"КР МЗ РФ «СПКЯ» 2021", full:"Клинические рекомендации МЗ РФ «Синдром поликистозных яичников», утв. 2021 г." },
+    { short:"КР МЗ РФ «Контрацепция» 2021", full:"Клинические рекомендации МЗ РФ «Контрацепция», утв. 2021 г." },
+    { short:"КР МЗ РФ «Мигрень» 2021", full:"Клинические рекомендации МЗ РФ «Мигрень», утв. 2021 г." },
+    { short:"КР МЗ РФ «Подагра» 2021", full:"Клинические рекомендации МЗ РФ «Подагра», утв. 2021 г." },
+    { short:"КР МЗ РФ «Нарушения липидного обмена» 2023", full:"Клинические рекомендации МЗ РФ «Нарушения липидного обмена», утв. 2023 г." },
+    { short:"КР МЗ РФ «Ожирение у взрослых» 2024", full:"Клинические рекомендации МЗ РФ «Ожирение у взрослых», утв. 2024 г." },
+    { short:"КР МЗ РФ «Привычный выкидыш» 2021", full:"Клинические рекомендации МЗ РФ «Привычный выкидыш», утв. 2021 г." },
     { short:"Протокол МАРС 2024", full:"Клинический протокол Межрегиональной ассоциации акушеров-гинекологов (МАРС) «Прегравидарная подготовка», 2024 г." },
     { short:"Чеклист питания FIGO 2023", full:"FIGO Nutrition Checklist for Preconception and Pregnancy, Международная федерация гинекологии и акушерства (FIGO), 2023 г." },
+    { short:"ВОЗ MEC 2015", full:"Медицинские критерии приемлемости для использования методов контрацепции, 5-е изд., Всемирная организация здравоохранения, 2015 г." },
     { short:"Рекомендации ВОЗ 2020", full:"Глобальные рекомендации Всемирной организации здравоохранения по физической активности и малоподвижному образу жизни, ВОЗ, 2020 г." },
-    { short:"КР МЗ РФ «Ожирение у взрослых» 2020", full:"Клинические рекомендации МЗ РФ «Ожирение у взрослых», утв. 2020 г." },
+    { short:"ESHRE PCOS 2023", full:"International evidence-based guideline for the assessment and management of polycystic ovary syndrome, ESHRE/ASRM, 2023." },
+    { short:"ESPEN 2021", full:"ESPEN Practical Guideline: Clinical nutrition, European Society for Clinical Nutrition and Metabolism, 2021." },
+    { short:"EULAR 2022", full:"EULAR recommendations for the management of gout, European Alliance of Associations for Rheumatology, 2022." },
+    { short:"ESC/ESH 2018", full:"2018 ESC/ESH Guidelines for the management of arterial hypertension, European Society of Cardiology / European Society of Hypertension, 2018." },
   ],
 };
 
 // ─── ДЕФОЛТНЫЕ ДАННЫЕ ─────────────────────────────────────────────────────────
 const DEFAULT_FORM = {
+  patient_name: '',
+  patient_dob: '',
   age: '22',
   family_cvd: 'Нет', family_pe: 'Нет',
   spky: 'Нет', coc: 'Нет', bp_measured: 'Да', migraine: 'Нет',
@@ -169,6 +209,10 @@ const DEFAULT_FORM = {
   sys1: '120', dia1: '80', sys2: '122', dia2: '82', sys3: '118', dia3: '78',
   labs_status: 'not_filled',
   cholesterol: '', uric_acid: '', albumin: '',
+  tsh: '', glucose: '', ferritin: '',
+  cycle: 'Регулярный (21–35 дней)',
+  miscarriages: '0',
+  dysmenorrhea: 'Нет',
 };
 
 // ─── УТИЛИТЫ ──────────────────────────────────────────────────────────────────
@@ -308,14 +352,20 @@ export default function App() {
     const labInt = {};
     const vr = RD.validation;
 
+    // Шаг 1: ФИО и дата рождения — обязательные
+    if (!form.patient_name || form.patient_name.trim().length < 2)
+      fe.patient_name = 'Обязательное поле';
+    if (!form.patient_dob)
+      fe.patient_dob = 'Обязательное поле';
+
     // Шаг 1: возраст — жёсткая блокировка если вне 22-25
     const age = Number(form.age);
     if (!age || age < vr.age.min || age > vr.age.max)
       fe.age = `Доступно только для ${vr.age.min}–${vr.age.max} лет`;
 
     const am = Number(form.active_min);
-    if (form.active_min !== '' && (am < 0 || am > 10000))
-      fe.active_min = 'от 0 до 10 000 мин/нед';
+    if (form.active_min !== '' && (am < 0 || am > 1500))
+      fe.active_min = 'от 0 до 1500 мин/нед';
 
     // Шаг 2: антропометрия
     const h = Number(form.height), w = Number(form.weight), wt = Number(form.waist);
@@ -343,18 +393,19 @@ export default function App() {
       fe.bp_required = 'Введите хотя бы одно измерение АД';
 
     // Шаг 3: лаборатория
-    ['cholesterol','uric_acid','albumin'].forEach(key => {
+    ['cholesterol','uric_acid','albumin','tsh','glucose','ferritin'].forEach(key => {
       const val = Number(form[key]);
       if (!val) return;
-      const v = vr[key]; const ref = RD.lab_ref[key];
+      const v = vr[key]; if (!v) return;
+      const ref = RD.lab_ref[key];
       if (val < v.min || val > v.max) { fe[key] = `${v.min}–${v.max}`; return; }
-      if (ref.hi && val > ref.hi) labInt[key] = { text:'Выше нормы', color:'text-orange-600' };
-      else if (ref.lo && val < ref.lo) labInt[key] = { text:'Ниже нормы', color:'text-blue-600' };
+      if (ref && ref.hi && val > ref.hi) labInt[key] = { text:'Выше нормы', color:'text-orange-600' };
+      else if (ref && ref.lo && val < ref.lo) labInt[key] = { text:'Ниже нормы', color:'text-blue-600' };
       else labInt[key] = { text:'В норме', color:'text-green-600' };
     });
 
     // Ошибки по текущему шагу (для блокировки кнопки)
-    const step1Fields = ['age', 'active_min'];
+    const step1Fields = ['patient_name', 'patient_dob', 'age', 'active_min'];
     const step2Fields = ['height','weight','waist','sys1','dia1','sys2','dia2','sys3','dia3','bp_required'];
     const step3Fields = ['cholesterol','uric_acid','albumin'];
 
@@ -398,10 +449,12 @@ export default function App() {
     // A — Семья
     if (form.family_cvd === 'Да') add('A','Ранние ССЗ у родственников первой линии', 2);
     if (form.family_pe === 'Да')  add('A','Преэклампсия в семейном анамнезе', 3);
+    if (Number(form.miscarriages) >= 2) add('A','Привычное невынашивание (≥ 2 выкидышей)', 3);
 
     // B — Репродукция
     if (form.spky === 'Да') add('B','Синдром поликистозных яичников (СПКЯ)', 3);
     if (form.coc === 'Да' && form.bp_measured === 'Нет') add('B','Приём КОК без контроля артериального давления', 3);
+    if (form.cycle !== 'Регулярный (21–35 дней)') add('B','Нарушение менструального цикла', 2);
 
     // C — Поведение
     if (form.smoke === 'Да') add('C','Курение / никотинсодержащие изделия', 3);
@@ -420,21 +473,25 @@ export default function App() {
 
     // G — Антропометрия и АД
     const bmi = metrics.bmi;
-    if (bmi >= 30)     add('G','Ожирение (ИМТ ≥ 30)', 4);
-    else if (bmi >= 25) add('G','Избыточная масса тела (ИМТ 25–29,9)', 2);
+    if (bmi > 0 && bmi < 18.5) add('G','Дефицит массы тела (ИМТ < 18,5)', 3); // п.1.4
+    else if (bmi >= 30)  add('G','Ожирение (ИМТ ≥ 30)', 4);
+    else if (bmi >= 25)  add('G','Избыточная масса тела (ИМТ 25–29,9)', 2);
 
     const waist = Number(form.waist);
     if (waist >= 88)      add('G','Выраженное абдоминальное ожирение (≥ 88 см)', 4);
     else if (waist >= 80) add('G','Абдоминальное ожирение (80–87 см)', 2);
 
-    // АД: ориентир — среднее из введённых измерений
-    if (metrics.avgSys >= 140 || metrics.avgDia >= 90) add('G','АД ≥ 140/90 мм рт.ст.', 6);
-    else if (metrics.avgSys >= 130 || metrics.avgDia >= 80) add('G','АД ≥ 130/80 мм рт.ст.', 3);
+    // АД — п.1.1: ДАД порог 80→85
+    if (metrics.avgSys >= 140 || metrics.avgDia >= 90) add('G','АД ≥ 140/90 мм рт.ст. (АГ 1 ст.)', 6);
+    else if (metrics.avgSys >= 130 || metrics.avgDia >= 85) add('G','АД ≥ 130/85 мм рт.ст. (высокое нормальное)', 3);
 
     // H — Лаборатория
-    if (form.cholesterol && Number(form.cholesterol) > 5.2) add('H','Гиперхолестеринемия (> 5,2 ммоль/л)', 2);
-    if (form.uric_acid   && Number(form.uric_acid)   > 357) add('H','Гиперурикемия (> 357 мкмоль/л)', 2);
-    if (form.albumin     && Number(form.albumin)     < 35)  add('H','Гипоальбуминемия (< 35 г/л)', 4);
+    if (form.cholesterol && Number(form.cholesterol) > 5.2)  add('H','Гиперхолестеринемия (> 5,2 ммоль/л)', 2);
+    if (form.uric_acid   && Number(form.uric_acid)   > 360)  add('H','Гиперурикемия (> 360 мкмоль/л)', 2);
+    if (form.albumin     && Number(form.albumin)     < 35)   add('H','Гипоальбуминемия (< 35 г/л)', 4);
+    if (form.tsh && (Number(form.tsh) < 0.4 || Number(form.tsh) > 2.5)) add('H','Отклонение ТТГ от нормы прегравидарного периода', 3);
+    if (form.glucose && Number(form.glucose) > 5.6)          add('H','Нарушение гликемии натощак (> 5,6 ммоль/л)', 3);
+    if (form.ferritin && Number(form.ferritin) < 30)         add('H','Латентный дефицит железа (ферритин < 30 мкг/л)', 2);
 
     breakdown.sort((a, b) => b.pts - a.pts);
     const top5 = breakdown.slice(0, 5);
@@ -461,7 +518,9 @@ export default function App() {
     if (view === 'results' && !report && role === 'Врач') {
       const d = new Date().toLocaleDateString('ru-RU');
       let t = `МЕДИЦИНСКОЕ ЗАКЛЮЧЕНИЕ (${d})\n${'='.repeat(40)}\n\n`;
-      t += `Пациентка ${form.age} лет. Категория риска: ${scoring.riskCat} (интегральный балл: ${scoring.total}).\n`;
+      if (form.patient_name) t += `Пациентка: ${form.patient_name}\n`;
+      if (form.patient_dob) t += `Дата рождения: ${new Date(form.patient_dob).toLocaleDateString('ru-RU')}\n`;
+      t += `Возраст: ${form.age} лет. Категория риска: ${scoring.riskCat} (интегральный балл: ${scoring.total}).\n`;
       t += `Достоверность оценки: ${valid.reliability}. ИМТ: ${metrics.bmi}. Среднее АД: ${metrics.avgSys}/${metrics.avgDia}.\n\n`;
       t += `[ ВЫЯВЛЕННЫЕ ФАКТОРЫ РИСКА ]\n`;
       scoring.top5.forEach(f => { t += `  — ${f.factor} (домен ${f.d}, +${f.pts} балл.)\n`; });
@@ -519,6 +578,9 @@ export default function App() {
           <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-200 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-400/30 mb-4">Для женщин 22–25 лет</span>
           <h2 className="text-2xl md:text-4xl font-black mb-3 tracking-tight">Прегравидарный скрининг рисков</h2>
           <p className="text-slate-300 mb-6 md:mb-8 text-sm md:text-base leading-relaxed max-w-xl">Клинический инструмент ранней оценки кардио-метаболических, нутритивных и репродуктивных рисков перед планированием беременности.</p>
+          <div className="mb-6 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-xs text-blue-200 leading-relaxed max-w-xl">
+            ⚕ Инструмент носит вспомогательный характер и не заменяет очную консультацию врача. Все рекомендации требуют профессиональной верификации.
+          </div>
           <button onClick={() => { setView('wizard'); setStep(1); setTab('summary'); setReport(''); }}
             className="bg-blue-500 hover:bg-blue-400 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-black uppercase text-xs md:text-sm flex items-center gap-3 transition shadow-lg shadow-blue-500/30">
             Начать оценку профиля <ArrowRight className="w-4 h-4 md:w-5 md:h-5"/>
@@ -692,17 +754,29 @@ export default function App() {
               {/* Возраст */}
               <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
                 <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Общие сведения</h3>
-                <div className="w-36">
-                  <label className={lbl}>Возраст (лет)</label>
-                  <NumInput value={form.age} onChange={v=>f({age:v})} className={`${inp} text-center text-2xl font-black ${errBorder('age')}`}/>
-                  <Err k="age"/>
-                  {!valid.fe.age && <p className="mt-1 text-[10px] text-green-600 font-bold">✓ Возраст в допустимом диапазоне</p>}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div className="sm:col-span-2">
+                    <label className={lbl}>ФИО пациентки <span className="text-red-500">*</span></label>
+                    <input type="text" value={form.patient_name} onChange={e=>f({patient_name:e.target.value})} className={`${inp} ${errBorder('patient_name')}`} placeholder="Фамилия Имя Отчество"/>
+                    <Err k="patient_name"/>
+                  </div>
+                  <div>
+                    <label className={lbl}>Дата рождения <span className="text-red-500">*</span></label>
+                    <input type="date" value={form.patient_dob} onChange={e=>f({patient_dob:e.target.value})} className={`${inp} ${errBorder('patient_dob')}`}/>
+                    <Err k="patient_dob"/>
+                  </div>
+                  <div>
+                    <label className={lbl}>Возраст (лет) <span className="text-red-500">*</span></label>
+                    <NumInput value={form.age} onChange={v=>f({age:v})} className={`${inp} text-center text-2xl font-black ${errBorder('age')}`}/>
+                    <Err k="age"/>
+                    {!valid.fe.age && <p className="mt-1 text-[10px] text-green-600 font-bold">✓ Возраст в допустимом диапазоне</p>}
+                  </div>
                 </div>
               </div>
 
               {/* Семейный анамнез (Домен A) */}
               <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Семейный анамнез <span className="text-blue-500">[A]</span></h3>
+                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Семейный анамнез</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className={lbl}>ССЗ у родственников первой линии</label><select value={form.family_cvd} onChange={e=>f({family_cvd:e.target.value})} className={sel}><option>Нет</option><option>Да</option></select></div>
                   <div><label className={lbl}>Преэклампсия у матери или сестёр</label><select value={form.family_pe} onChange={e=>f({family_pe:e.target.value})} className={sel}><option>Нет</option><option>Да</option></select></div>
@@ -711,10 +785,13 @@ export default function App() {
 
               {/* Репродуктивный статус (Домен B) */}
               <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Репродуктивный статус <span className="text-blue-500">[B]</span></h3>
+                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Репродуктивный статус</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label className={lbl}>Регулярность менструального цикла</label><select value={form.cycle} onChange={e=>f({cycle:e.target.value})} className={sel}><option>Регулярный (21–35 дней)</option><option>Нерегулярный (&gt; 35 или &lt; 21 дня)</option><option>Отсутствует &gt; 3 месяцев</option></select></div>
                   <div><label className={lbl}>Синдром поликистозных яичников (СПКЯ)</label><select value={form.spky} onChange={e=>f({spky:e.target.value})} className={sel}><option>Нет</option><option>Да</option></select></div>
                   <div><label className={lbl}>Приём КОК</label><select value={form.coc} onChange={e=>f({coc:e.target.value})} className={sel}><option>Нет</option><option>Да</option></select></div>
+                  <div><label className={lbl}>Выкидыши в анамнезе</label><select value={form.miscarriages} onChange={e=>f({miscarriages:e.target.value})} className={sel}><option value="0">Нет</option><option value="1">1</option><option value="2">≥ 2</option></select></div>
+                  <div><label className={lbl}>Болезненные менструации</label><select value={form.dysmenorrhea} onChange={e=>f({dysmenorrhea:e.target.value})} className={sel}><option>Нет</option><option>Умеренные</option><option>Тяжёлые (требуют анальгетиков)</option></select></div>
                   {form.coc === 'Да' && (
                     <div className="sm:col-span-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                       <label className={lbl}>АД контролируется на фоне приёма КОК?</label>
@@ -726,13 +803,13 @@ export default function App() {
 
               {/* Симптомы (Домен D) */}
               <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Симптомы <span className="text-blue-500">[D]</span></h3>
+                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Симптомы</h3>
                 <div><label className={lbl}>Мигрень</label><select value={form.migraine} onChange={e=>f({migraine:e.target.value})} className={sel+" max-w-sm"}><option>Нет</option><option>Без ауры</option><option>С аурой</option></select></div>
               </div>
 
               {/* Поведение (Домен C) */}
               <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Поведенческие факторы <span className="text-blue-500">[C]</span></h3>
+                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Поведенческие факторы</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className={lbl}>Курение (сигареты, вейпы, кальян)</label><select value={form.smoke} onChange={e=>f({smoke:e.target.value})} className={sel}><option>Нет</option><option>Да</option></select></div>
                   <div><label className={lbl}>Продолжительность ночного сна</label><select value={form.sleep} onChange={e=>f({sleep:e.target.value})} className={sel}><option>7–9 часов</option><option>Менее 7 часов</option><option>Более 9 часов</option></select></div>
@@ -741,7 +818,7 @@ export default function App() {
 
               {/* Питание и физкультура (Домены E, F) */}
               <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Питание и физическая активность <span className="text-blue-500">[E, F]</span></h3>
+                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Питание и физическая активность</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className={lbl}>Овощи и фрукты (чеклист FIGO)</label><select value={form.figo_veg} onChange={e=>f({figo_veg:e.target.value})} className={sel}><option value="Достаточно">Достаточно (≥ 400 г/сут)</option><option value="Мало">Мало (менее нормы)</option></select></div>
                   <div><label className={lbl}>Регулярный фастфуд / ультрапереработанное</label><select value={form.figo_fastfood} onChange={e=>f({figo_fastfood:e.target.value})} className={sel}><option>Нет</option><option>Да</option></select></div>
@@ -761,7 +838,7 @@ export default function App() {
               {/* Антропометрия (Домен G) */}
               <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between border-b pb-3 mb-5">
-                  <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest">Антропометрия <span className="text-blue-500">[G]</span></h3>
+                  <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest">Антропометрия</h3>
                   {metrics.bmi > 0 && (
                     <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-black">
                       ИМТ: {metrics.bmi} {metrics.bmi < 18.5 ? '↓ Дефицит' : metrics.bmi < 25 ? '✓ Норма' : metrics.bmi < 30 ? '↑ Избыток' : '↑↑ Ожирение'}
@@ -782,7 +859,7 @@ export default function App() {
               {/* АД (Домен G) */}
               <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between border-b pb-3 mb-5">
-                  <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest">Офисное АД <span className="text-blue-500">[G]</span></h3>
+                  <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest">Офисное АД</h3>
                   {metrics.sysCount > 0 && (
                     <span className={`text-xs px-3 py-1 rounded-full font-black ${metrics.avgSys >= 140 ? 'bg-red-100 text-red-700' : metrics.avgSys >= 130 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
                       Среднее: {metrics.avgSys}/{metrics.avgDia}
@@ -821,14 +898,17 @@ export default function App() {
           {step === 3 && (
             <div className="space-y-6">
               <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Лабораторные данные <span className="text-blue-500">[H]</span></h3>
+                <h3 className="font-black text-xs uppercase text-slate-500 tracking-widest border-b pb-3 mb-5">Лабораторные данные</h3>
                 <p className="text-xs text-slate-500 mb-6 italic">Необязательный блок. При наличии анализов повышает достоверность до «Высокой».</p>
 
-                <div className={`grid grid-cols-1 sm:grid-cols-3 gap-6 transition-opacity ${form.labs_status==='no_labs' ? 'opacity-30 pointer-events-none' : ''}`}>
+                <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 transition-opacity ${form.labs_status==='no_labs' ? 'opacity-30 pointer-events-none' : ''}`}>
                   {[
                     { k:'cholesterol', l:'Общий холестерин', ref:'Норма: < 5,2 ммоль/л', unit:'ммоль/л' },
-                    { k:'uric_acid',   l:'Мочевая кислота', ref:'Норма: 155–357 мкмоль/л', unit:'мкмоль/л' },
+                    { k:'uric_acid',   l:'Мочевая кислота', ref:'Норма: 155–360 мкмоль/л', unit:'мкмоль/л' },
                     { k:'albumin',     l:'Альбумин сыворотки', ref:'Норма: 35–52 г/л', unit:'г/л' },
+                    { k:'tsh',         l:'ТТГ', ref:'Норма: 0,4–2,5 мЕд/л (прегравид.)', unit:'мЕд/л' },
+                    { k:'glucose',     l:'Глюкоза натощак', ref:'Норма: < 5,6 ммоль/л', unit:'ммоль/л' },
+                    { k:'ferritin',    l:'Ферритин', ref:'Норма: ≥ 30 мкг/л', unit:'мкг/л' },
                   ].map(({k,l,ref,unit}) => {
                     const vi = valid.labInt[k];
                     return (
@@ -851,7 +931,7 @@ export default function App() {
                 <label className="flex items-center gap-3 mt-6 cursor-pointer pt-5 border-t border-slate-100">
                   <div className="relative">
                     <input type="checkbox" checked={form.labs_status==='no_labs'} className="w-5 h-5 appearance-none border-2 border-slate-300 rounded-md checked:bg-blue-600 checked:border-blue-600 transition"
-                      onChange={e=>f({labs_status:e.target.checked?'no_labs':'not_filled', cholesterol:'', uric_acid:'', albumin:''})}/>
+                      onChange={e=>f({labs_status:e.target.checked?'no_labs':'not_filled', cholesterol:'', uric_acid:'', albumin:'', tsh:'', glucose:'', ferritin:''})}/>
                     <CheckCircle2 className={`absolute inset-0 m-auto w-3.5 h-3.5 text-white transition-opacity ${form.labs_status==='no_labs' ? 'opacity-100' : 'opacity-0'}`}/>
                   </div>
                   <span className="text-sm font-black text-slate-700">Лабораторные данные отсутствуют</span>
@@ -961,7 +1041,6 @@ export default function App() {
       { id:'summary', l:'Сводка' },
       { id:'explain', l:'Детализация' },
       { id:'report',  l:'Заключение' },
-      { id:'json',    l:'JSON' },
     ];
 
     return (
@@ -972,18 +1051,24 @@ export default function App() {
             <div>
               <div className="flex flex-wrap items-center gap-3 mb-1">
                 <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase">Медицинское заключение</h2>
+                {form.patient_name && <span className="text-sm font-bold text-slate-500 normal-case">— {form.patient_name}</span>}
                 <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${valid.reliability==='Высокая' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
                   {valid.reliability==='Высокая' ? 'Расширенный результат' : 'Базовый результат'}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+              <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide items-center">
                 <span>Дата: {new Date().toLocaleDateString('ru-RU')}</span>
                 <span>•</span>
-                <span className={valid.reliability==='Высокая'?'text-green-600':'text-amber-600'}>Достоверность: {valid.reliability}</span>
-                <span>•</span>
-                <span>ИМТ: {metrics.bmi}</span>
-                <span>•</span>
-                <span>АД: {metrics.avgSys}/{metrics.avgDia}</span>
+                <span className={valid.reliability==='Высокая'?'text-green-600':'text-amber-600'}>
+                  Достоверность: {valid.reliability}
+                </span>
+                <span className="normal-case font-normal text-slate-400 text-[9px]">
+                  {valid.reliability==='Высокая'
+                    ? '(все данные заполнены, включая лабораторию)'
+                    : valid.reliability==='Средняя'
+                    ? '(данные заполнены, лабораторные анализы отсутствуют)'
+                    : '(данные заполнены частично)'}
+                </span>
               </div>
             </div>
             <button onClick={() => { setView('dashboard'); setReport(''); }}
@@ -1077,11 +1162,29 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Паутинка + рекомендации */}
+                {/* Домены + рекомендации */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-3">Фенотипический профиль A–H</p>
-                    <RadarChart scores={scoring.dom}/>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Вклад по доменам риска</p>
+                    <div className="space-y-3">
+                      {Object.entries(RD.domains).map(([d, info]) => {
+                        const score = scoring.dom[d] || 0;
+                        const pct = Math.min((score / info.max) * 100, 100);
+                        const col = pct > 66 ? 'bg-red-500' : pct > 33 ? 'bg-amber-400' : score > 0 ? 'bg-blue-500' : 'bg-slate-100';
+                        return (
+                          <div key={d} className="flex items-center gap-3">
+                            <span className="text-[10px] font-black text-slate-500 w-4 shrink-0">{d}</span>
+                            <div className="flex-1 relative">
+                              <div className="h-6 bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative">
+                                <div className={`h-full rounded-lg transition-all duration-700 ${col}`} style={{width:`${pct}%`}}/>
+                                <span className="absolute inset-0 flex items-center px-2 text-[10px] font-black text-slate-600 truncate">{info.name}</span>
+                              </div>
+                            </div>
+                            <span className="text-xs font-black text-slate-700 w-10 text-right shrink-0">{score}/{info.max}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Рекомендации по выявленным проблемам</p>
@@ -1114,12 +1217,18 @@ export default function App() {
             {/* ── ДЕТАЛИЗАЦИЯ ────────────────────────────────────────── */}
             {tab === 'explain' && (
               <div className="space-y-6">
-                <div className="bg-white p-5 md:p-10 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight border-b pb-3 mb-2">Детализация расчёта</h3>
-                    <p className="text-sm text-slate-500 italic">Прозрачная матрица начисления баллов по правилам версии {RD.version}. Все расчёты детерминированы.</p>
+                {/* Вводный блок */}
+                <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight border-b pb-3 mb-4">Детализация расчёта</h3>
+                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl text-sm text-blue-900 leading-relaxed">
+                    <p className="font-black mb-1">Методология расчёта</p>
+                    <p>Интегральный балл формируется путём суммирования весовых коэффициентов клинических факторов риска, распределённых по восьми патогенетическим доменам. Пороговые значения и весовые коэффициенты соответствуют клиническим рекомендациям МЗ РФ, протоколу МАРС 2024 и международным руководствам (FIGO, ВОЗ, ESC). Все расчёты детерминированы и воспроизводимы при повторном введении идентичных данных.</p>
                   </div>
+                </div>
 
+                {/* Таблица факторов */}
+                <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Выявленные факторы риска</p>
                   {scoring.breakdown.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm text-left border-collapse">
@@ -1151,56 +1260,86 @@ export default function App() {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-slate-400 italic py-8 text-center">Факторы риска не выявлены. Интегральный балл: 0.</p>
+                    <div className="py-8 text-center">
+                      <p className="text-slate-400 italic mb-2">Факторы риска не выявлены. Интегральный балл: 0.</p>
+                      <p className="text-xs text-slate-400">Все введённые показатели находятся в пределах референсных значений.</p>
+                    </div>
                   )}
                 </div>
 
-                {/* Интерпретация результата */}
+                {/* Интерпретация + категория */}
                 <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Интерпретация: текущий результат</p>
-                  <div className="flex flex-col gap-2">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Категория риска — текущий результат</p>
+                  <div className="flex flex-col gap-2 mb-4">
                     {[
-                      { cat:'Низкий',     range:'0–5',  col:'bg-green-500',  active: scoring.riskCat==='Низкий' },
-                      { cat:'Умеренный',  range:'6–11', col:'bg-amber-400',  active: scoring.riskCat==='Умеренный' },
-                      { cat:'Повышенный', range:'12–17',col:'bg-orange-500', active: scoring.riskCat==='Повышенный' },
-                      { cat:'Высокий',    range:'≥ 18', col:'bg-red-500',    active: scoring.riskCat==='Высокий' },
-                    ].map(({ cat, range, col, active }) => (
-                      <div key={cat} className={`flex items-center gap-4 p-3 rounded-xl border-2 transition ${active ? 'border-slate-700 shadow-md' : 'border-transparent opacity-50'}`}>
-                        <div className={`w-4 h-4 rounded-full shrink-0 ${col}`}/>
-                        <span className="font-black text-sm text-slate-800 w-28">{cat}</span>
-                        <span className="text-xs text-slate-500">{range} баллов</span>
-                        {active && (
-                          <span className="ml-auto text-[10px] font-black bg-slate-900 text-white px-3 py-1 rounded-lg uppercase tracking-wide">← Текущий результат: {scoring.total} балл.</span>
-                        )}
+                      { cat:'Низкий',     range:'0–5',  col:'bg-green-500',  desc:'Профилактический осмотр; стандартная прегравидарная подготовка' },
+                      { cat:'Умеренный',  range:'6–11', col:'bg-amber-400',  desc:'Коррекция модифицируемых факторов; повторная оценка через 3 месяца' },
+                      { cat:'Повышенный', range:'12–17',col:'bg-orange-500', desc:'Расширенное обследование; мультидисциплинарная консультация до зачатия' },
+                      { cat:'Высокий',    range:'≥ 18', col:'bg-red-500',    desc:'Обязательная консультация кардиолога и акушера-гинеколога; индивидуальный план ведения' },
+                    ].map(({ cat, range, col, desc, active = scoring.riskCat===cat }) => (
+                      <div key={cat} className={`flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-xl border-2 transition ${active ? 'border-slate-700 shadow-md' : 'border-transparent opacity-40'}`}>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className={`w-3 h-3 rounded-full shrink-0 ${col}`}/>
+                          <span className="font-black text-sm text-slate-800 w-24">{cat}</span>
+                          <span className="text-xs text-slate-500 w-16">{range} балл.</span>
+                        </div>
+                        <span className="text-xs text-slate-600 sm:border-l sm:pl-3">{desc}</span>
+                        {active && <span className="ml-auto text-[10px] font-black bg-slate-900 text-white px-3 py-1 rounded-lg uppercase shrink-0">← Текущий</span>}
                       </div>
                     ))}
                   </div>
                   {scoring.activeCC.length > 0 && (
-                    <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-xl p-3 mt-4 font-medium">
-                      ⚠ Категория повышена на одну ступень из-за критических сочетаний факторов: {scoring.activeCC.map(c=>c.title).join('; ')}
-                    </p>
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl text-xs text-orange-800 font-medium leading-relaxed">
+                      <p className="font-black mb-1">⚠ Повышение категории за счёт критических сочетаний</p>
+                      {scoring.activeCC.map(c=><p key={c.id}>— {c.title} ({c.effect})</p>)}
+                    </div>
                   )}
                 </div>
 
-                {/* Максимальный балл по доменам */}
+                {/* Домены — подробно */}
                 <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Вклад по доменам (набрано / максимум)</p>
-                  <div className="space-y-3">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5">Патогенетические домены — вклад в интегральный балл</p>
+                  <div className="space-y-4">
                     {Object.entries(RD.domains).map(([d, info]) => {
                       const score = scoring.dom[d] || 0;
                       const pct = Math.min((score / info.max) * 100, 100);
                       const col = pct > 66 ? 'bg-red-500' : pct > 33 ? 'bg-amber-400' : score > 0 ? 'bg-blue-500' : 'bg-slate-200';
+                      const factors = scoring.breakdown.filter(b=>b.d===d);
                       return (
-                        <div key={d} className="flex items-center gap-3">
-                          <span className="text-[10px] font-black text-slate-500 w-5">{d}</span>
-                          <span className="text-xs text-slate-600 w-44 shrink-0 hidden sm:block">{info.name}</span>
-                          <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div key={d} className="border border-slate-100 rounded-xl p-4">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-[11px] font-black text-white bg-slate-600 w-6 h-6 rounded-md flex items-center justify-center shrink-0">{d}</span>
+                            <span className="text-sm font-black text-slate-700 flex-1">{info.name}</span>
+                            <span className="text-xs font-black text-slate-500">{score}/{info.max}</span>
+                          </div>
+                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
                             <div className={`h-full rounded-full transition-all duration-700 ${col}`} style={{width:`${pct}%`}}/>
                           </div>
-                          <span className="text-xs font-black text-slate-700 w-12 text-right shrink-0">{score}/{info.max}</span>
+                          {factors.length > 0 ? (
+                            <ul className="mt-2 space-y-1">
+                              {factors.map((f,i)=>(
+                                <li key={i} className="flex justify-between text-xs text-slate-600">
+                                  <span>— {f.factor}</span>
+                                  <span className="font-black text-slate-800 shrink-0 ml-2">+{f.pts}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-[10px] text-slate-400 mt-1 italic">Факторы риска по данному домену не выявлены</p>
+                          )}
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* Источники */}
+                <div className="bg-slate-50 p-5 md:p-8 rounded-2xl border border-slate-200">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Нормативная база расчёта</p>
+                  <div className="space-y-2">
+                    {RD.sources.map(s=>(
+                      <p key={s.short} className="text-xs text-slate-600 leading-snug border-l-2 border-blue-200 pl-3">{s.full}</p>
+                    ))}
                   </div>
                 </div>
               </div>
