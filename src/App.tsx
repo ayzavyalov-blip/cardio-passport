@@ -199,7 +199,6 @@ const RD = {
 // ─── ДЕФОЛТНЫЕ ДАННЫЕ ─────────────────────────────────────────────────────────
 const DEFAULT_FORM = {
   patient_name: '',
-  patient_dob: '',
   age: '22',
   family_cvd: 'Нет', family_pe: 'Нет',
   spky: 'Нет', coc: 'Нет', bp_measured: 'Да', migraine: 'Нет',
@@ -323,6 +322,41 @@ const NumInput = React.memo(function NumInput({
   );
 });
 
+// ─── СТАБИЛЬНЫЙ ТЕКСТОВЫЙ ИНПУТ ──────────────────────────────────────────────
+// Нужен для мобильных браузеров и экранных клавиатур:
+// ввод ФИО хранится локально и передаётся в общую форму только при выходе из поля.
+// Это предотвращает потерю фокуса и сброс курсора после каждой буквы.
+const TextInput = React.memo(function TextInput({
+  value, onChange, className, placeholder
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+  placeholder?: string;
+}) {
+  const [local, setLocal] = useState(value);
+  const focused = useRef(false);
+
+  useEffect(() => {
+    if (!focused.current) setLocal(value);
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onFocus={() => { focused.current = true; }}
+      onBlur={() => { focused.current = false; onChange(local); }}
+      className={className}
+      placeholder={placeholder}
+      autoComplete="name"
+      autoCorrect="off"
+      spellCheck={false}
+    />
+  );
+});
+
 export default function App() {
   const [view, setView]         = useState('dashboard');
   const [role, setRole]         = useState('Врач');
@@ -355,8 +389,6 @@ export default function App() {
     // Шаг 1: ФИО и дата рождения — обязательные
     if (!form.patient_name || form.patient_name.trim().length < 2)
       fe.patient_name = 'Обязательное поле';
-    if (!form.patient_dob)
-      fe.patient_dob = 'Обязательное поле';
 
     // Шаг 1: возраст — жёсткая блокировка если вне 22-25
     const age = Number(form.age);
@@ -405,7 +437,7 @@ export default function App() {
     });
 
     // Ошибки по текущему шагу (для блокировки кнопки)
-    const step1Fields = ['patient_name', 'patient_dob', 'age', 'active_min'];
+    const step1Fields = ['patient_name', 'age', 'active_min'];
     const step2Fields = ['height','weight','waist','sys1','dia1','sys2','dia2','sys3','dia3','bp_required'];
     const step3Fields = ['cholesterol','uric_acid','albumin'];
 
@@ -519,7 +551,6 @@ export default function App() {
       const d = new Date().toLocaleDateString('ru-RU');
       let t = `МЕДИЦИНСКОЕ ЗАКЛЮЧЕНИЕ (${d})\n${'='.repeat(40)}\n\n`;
       if (form.patient_name) t += `Пациентка: ${form.patient_name}\n`;
-      if (form.patient_dob) t += `Дата рождения: ${new Date(form.patient_dob).toLocaleDateString('ru-RU')}\n`;
       t += `Возраст: ${form.age} лет. Категория риска: ${scoring.riskCat} (интегральный балл: ${scoring.total}).\n`;
       t += `Достоверность оценки: ${valid.reliability}. ИМТ: ${metrics.bmi}. Среднее АД: ${metrics.avgSys}/${metrics.avgDia}.\n\n`;
       t += `[ ВЫЯВЛЕННЫЕ ФАКТОРЫ РИСКА ]\n`;
@@ -546,7 +577,6 @@ export default function App() {
         <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-black text-xs">КП</div>
         <div className="hidden sm:block">
           <p className="text-sm font-black text-slate-900 leading-none">Кардио-репродуктивный паспорт</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Версия {RD.version}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 border-l pl-3 md:pl-4">
@@ -757,13 +787,8 @@ export default function App() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="sm:col-span-2">
                     <label className={lbl}>ФИО пациентки <span className="text-red-500">*</span></label>
-                    <input type="text" value={form.patient_name} onChange={e=>f({patient_name:e.target.value})} className={`${inp} ${errBorder('patient_name')}`} placeholder="Фамилия Имя Отчество"/>
+                    <TextInput value={form.patient_name} onChange={v=>f({patient_name:v})} className={`${inp} ${errBorder('patient_name')}`} placeholder="Фамилия Имя Отчество"/>
                     <Err k="patient_name"/>
-                  </div>
-                  <div>
-                    <label className={lbl}>Дата рождения <span className="text-red-500">*</span></label>
-                    <input type="date" value={form.patient_dob} onChange={e=>f({patient_dob:e.target.value})} className={`${inp} ${errBorder('patient_dob')}`}/>
-                    <Err k="patient_dob"/>
                   </div>
                   <div>
                     <label className={lbl}>Возраст (лет) <span className="text-red-500">*</span></label>
