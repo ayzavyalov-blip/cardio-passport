@@ -278,6 +278,9 @@ function riskColors(cat) {
 }
 
 // ─── РАДАР ────────────────────────────────────────────────────────────────────
+// ─── СТАБИЛЬНЫЙ SELECT ───────────────────────────────────────────────────────
+// Вынесен за пределы App — предотвращает потерю фокуса на Android Chrome.
+// Синхронизирует значение с родителем только onBlur (аналогично NumInput).
 // ─── ОСНОВНОЕ ПРИЛОЖЕНИЕ ──────────────────────────────────────────────────────
 // ─── СТАБИЛЬНЫЙ ЧИСЛОВОЙ ИНПУТ ───────────────────────────────────────────────
 // Ключевое решение для Android Chrome:
@@ -315,6 +318,37 @@ const NumInput = React.memo(function NumInput({
       autoCorrect="off"
       spellCheck={false}
     />
+  );
+});
+
+// ─── СТАБИЛЬНЫЙ SELECT (аналог NumInput для выпадающих списков) ──────────────
+// На Android Chrome onChange на select вызывает ре-рендер и сбрасывает скролл.
+// Решение: локальный state + мгновенная синхронизация с родителем.
+const StableSelect = React.memo(function StableSelect({
+  value, onChange, className, children, title
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+  children: React.ReactNode;
+  title?: string;
+}) {
+  const [local, setLocal] = React.useState(value);
+  const focused = React.useRef(false);
+  React.useEffect(() => {
+    if (!focused.current) setLocal(value);
+  }, [value]);
+  return (
+    <select
+      value={local}
+      className={className}
+      title={title}
+      onChange={e => { const v = e.target.value; setLocal(v); onChange(v); }}
+      onFocus={() => { focused.current = true; }}
+      onBlur={() => { focused.current = false; onChange(local); }}
+    >
+      {children}
+    </select>
   );
 });
 
@@ -728,7 +762,7 @@ export default function App() {
 
       {/* ── 4 ДОМЕНА ──────────────────────────────────────────────────────────── */}
       <div className="max-w-5xl mx-auto px-4 md:px-8 pt-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { icon: HeartPulse, accent:'bg-rose-500', soft:'bg-rose-50', text:'text-rose-600', title:'Кардиометаболический риск',
               items:['ИМТ и масса тела','Окружность талии','Артериальное давление','Липидный профиль'] },
@@ -745,7 +779,7 @@ export default function App() {
                 <div className={`w-9 h-9 ${soft} rounded-xl flex items-center justify-center mb-3`}>
                   <Icon className={`w-4.5 h-4.5 ${text}`} style={{width:'18px',height:'18px'}}/>
                 </div>
-                <p className={`font-black text-sm leading-snug mb-2.5 ${text}`}>{title}</p>
+                <p className={`font-black text-xs md:text-sm leading-snug mb-2.5 ${text}`}>{title}</p>
                 <ul className="space-y-1">
                   {items.map(it => (
                     <li key={it} className="flex items-start gap-1.5 text-xs text-slate-500">
@@ -974,7 +1008,7 @@ export default function App() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <label className={lbl}>ФИО пациентки <span className="text-red-500">*</span></label>
-                    <input type="text" value={form.patient_name} onChange={e=>f({patient_name:e.target.value})}
+                    <input type="text" value={form.patient_name} onChange={v=>f({patient_name:v})}
                       className={`${inp} ${errBorder('patient_name')}`} placeholder="Фамилия Имя Отчество"/>
                     <Err k="patient_name"/>
                   </div>
@@ -991,8 +1025,8 @@ export default function App() {
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Семейный анамнез</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={lbl}>ССЗ у родственников первой линии</label><select value={form.family_cvd} onChange={e=>f({family_cvd:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                  <div><label className={lbl}>Преэклампсия у матери или сестёр</label><select value={form.family_pe} onChange={e=>f({family_pe:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
+                  <div><label className={lbl}>ССЗ у родственников первой линии</label><StableSelect value={form.family_cvd} onChange={v=>f({family_cvd:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Преэклампсия у матери или сестёр</label><StableSelect value={form.family_pe} onChange={v=>f({family_pe:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
                 </div>
               </div>
 
@@ -1000,15 +1034,15 @@ export default function App() {
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Репродуктивный статус</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={lbl}>Регулярность менструального цикла</label><select value={form.cycle} onChange={e=>f({cycle:e.target.value})} className={sel}><option value="">— Не указано</option><option>Регулярный (21–35 дней)</option><option>Нерегулярный (&gt; 35 или &lt; 21 дня)</option><option>Отсутствует &gt; 3 месяцев</option></select></div>
-                  <div><label className={lbl}>СПКЯ</label><select value={form.spky} onChange={e=>f({spky:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                  <div><label className={lbl}>Приём КОК</label><select value={form.coc} onChange={e=>f({coc:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                  <div><label className={lbl}>Выкидыши в анамнезе</label><select value={form.miscarriages} onChange={e=>f({miscarriages:e.target.value})} className={sel}><option value="">— Не указано</option><option value="0">Нет</option><option value="1">1</option><option value="2">≥ 2</option></select></div>
-                  <div><label className={lbl}>Болезненные менструации</label><select value={form.dysmenorrhea} onChange={e=>f({dysmenorrhea:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Умеренные</option><option>Тяжёлые (требуют анальгетиков)</option></select></div>
+                  <div><label className={lbl}>Регулярность менструального цикла</label><StableSelect value={form.cycle} onChange={v=>f({cycle:v})} className={sel}><option value="">— Не указано</option><option>Регулярный (21–35 дней)</option><option>Нерегулярный (&gt; 35 или &lt; 21 дня)</option><option>Отсутствует &gt; 3 месяцев</option></StableSelect></div>
+                  <div><label className={lbl}>СПКЯ</label><StableSelect value={form.spky} onChange={v=>f({spky:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Приём КОК</label><StableSelect value={form.coc} onChange={v=>f({coc:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Выкидыши в анамнезе</label><StableSelect value={form.miscarriages} onChange={v=>f({miscarriages:v})} className={sel}><option value="">— Не указано</option><option value="0">Нет</option><option value="1">1</option><option value="2">≥ 2</option></StableSelect></div>
+                  <div><label className={lbl}>Болезненные менструации</label><StableSelect value={form.dysmenorrhea} onChange={v=>f({dysmenorrhea:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Умеренные</option><option>Тяжёлые (требуют анальгетиков)</option></StableSelect></div>
                   {form.coc === 'Да' && (
                     <div className="sm:col-span-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                       <label className={lbl}>АД контролируется на фоне КОК?</label>
-                      <select value={form.bp_measured} onChange={e=>f({bp_measured:e.target.value})} className={sel}><option value="">— Не указано</option><option value="Да">Да</option><option value="Нет">Нет</option></select>
+                      <StableSelect value={form.bp_measured} onChange={v=>f({bp_measured:v})} className={sel}><option value="">— Не указано</option><option value="Да">Да</option><option value="Нет">Нет</option></StableSelect>
                     </div>
                   )}
                 </div>
@@ -1018,10 +1052,10 @@ export default function App() {
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Симптомы и образ жизни</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={lbl}>Мигрень</label><select value={form.migraine} onChange={e=>f({migraine:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Без ауры</option><option>С аурой</option></select></div>
-                  <div><label className={lbl}>Курение (сигареты, вейпы, кальян)</label><select value={form.smoke} onChange={e=>f({smoke:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                  <div><label className={lbl}>Алкоголь регулярно</label><select value={form.alcohol} onChange={e=>f({alcohol:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                  <div><label className={lbl}>Продолжительность ночного сна</label><select value={form.sleep} onChange={e=>f({sleep:e.target.value})} className={sel}><option value="">— Не указано</option><option>7–9 часов</option><option>Менее 7 часов</option><option>Более 9 часов</option></select></div>
+                  <div><label className={lbl}>Мигрень</label><StableSelect value={form.migraine} onChange={v=>f({migraine:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Без ауры</option><option>С аурой</option></StableSelect></div>
+                  <div><label className={lbl}>Курение (сигареты, вейпы, кальян)</label><StableSelect value={form.smoke} onChange={v=>f({smoke:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Алкоголь регулярно</label><StableSelect value={form.alcohol} onChange={v=>f({alcohol:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Продолжительность ночного сна</label><StableSelect value={form.sleep} onChange={v=>f({sleep:v})} className={sel}><option value="">— Не указано</option><option>7–9 часов</option><option>Менее 7 часов</option><option>Более 9 часов</option></StableSelect></div>
                 </div>
               </div>
 
@@ -1029,11 +1063,11 @@ export default function App() {
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Питание и физическая активность</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={lbl}>Овощи и фрукты (чеклист FIGO)</label><select value={form.figo_veg} onChange={e=>f({figo_veg:e.target.value})} className={sel}><option value="">— Не указано</option><option value="Достаточно">Достаточно (≥ 400 г/сут)</option><option value="Мало">Мало (менее нормы)</option></select></div>
-                  <div><label className={lbl}>Регулярный фастфуд / ультрапереработанное</label><select value={form.figo_fastfood} onChange={e=>f({figo_fastfood:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                  <div><label className={lbl}>Рыба в рационе ≥ 1–2 раз/нед</label><select value={form.fish} onChange={e=>f({fish:e.target.value})} className={sel}><option value="">— Не указано</option><option>Да</option><option>Нет</option></select></div>
-                  <div><label className={lbl}>Ограничительная диета / РПП</label><select value={form.diet_restrict} onChange={e=>f({diet_restrict:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                  <div><label className={lbl}>Фолиевая кислота</label><select value={form.folate} onChange={e=>f({folate:e.target.value})} className={sel}><option value="">— Не указано</option><option value="Да">Да, принимаю</option><option value="Нет">Нет</option></select></div>
+                  <div><label className={lbl}>Овощи и фрукты (чеклист FIGO)</label><StableSelect value={form.figo_veg} onChange={v=>f({figo_veg:v})} className={sel}><option value="">— Не указано</option><option value="Достаточно">Достаточно (≥ 400 г/сут)</option><option value="Мало">Мало (менее нормы)</option></StableSelect></div>
+                  <div><label className={lbl}>Регулярный фастфуд / ультрапереработанное</label><StableSelect value={form.figo_fastfood} onChange={v=>f({figo_fastfood:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Рыба в рационе ≥ 1–2 раз/нед</label><StableSelect value={form.fish} onChange={v=>f({fish:v})} className={sel}><option value="">— Не указано</option><option>Да</option><option>Нет</option></StableSelect></div>
+                  <div><label className={lbl}>Ограничительная диета / РПП</label><StableSelect value={form.diet_restrict} onChange={v=>f({diet_restrict:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Фолиевая кислота</label><StableSelect value={form.folate} onChange={v=>f({folate:v})} className={sel}><option value="">— Не указано</option><option value="Да">Да, принимаю</option><option value="Нет">Нет</option></StableSelect></div>
                   <div>
                     <label className={lbl}>Физическая активность (мин/нед)</label>
                     <NumInput value={form.active_min} onChange={v=>f({active_min:v})} className={`${inp} ${errBorder('active_min')}`} placeholder="Напр. 150"/>
@@ -1050,11 +1084,11 @@ export default function App() {
                     <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-lg">Заполняется при наличии прошлых беременностей</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label className={lbl}>Преэклампсия у самой пациентки</label><select value={form.pe_own} onChange={e=>f({pe_own:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                    <div><label className={lbl}>Гестационный диабет</label><select value={form.gdm} onChange={e=>f({gdm:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                    <div><label className={lbl}>Задержка роста плода</label><select value={form.fgr} onChange={e=>f({fgr:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                    <div><label className={lbl}>Преждевременные роды</label><select value={form.preterm} onChange={e=>f({preterm:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                    <div><label className={lbl}>Антенатальная гибель плода</label><select value={form.stillbirth} onChange={e=>f({stillbirth:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
+                    <div><label className={lbl}>Преэклампсия у самой пациентки</label><StableSelect value={form.pe_own} onChange={v=>f({pe_own:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Гестационный диабет</label><StableSelect value={form.gdm} onChange={v=>f({gdm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Задержка роста плода</label><StableSelect value={form.fgr} onChange={v=>f({fgr:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Преждевременные роды</label><StableSelect value={form.preterm} onChange={v=>f({preterm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Антенатальная гибель плода</label><StableSelect value={form.stillbirth} onChange={v=>f({stillbirth:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
                   </div>
                 </div>
               ) : (
@@ -1073,12 +1107,12 @@ export default function App() {
                     <span className="text-[10px] text-amber-700 font-bold bg-amber-100 px-2 py-1 rounded-lg">Выявлены факторы высокого риска</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label className={lbl}>Хроническая АГ</label><select value={form.chronic_htn} onChange={e=>f({chronic_htn:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                    <div><label className={lbl}>Сахарный диабет 1 или 2 типа</label><select value={form.dm} onChange={e=>f({dm:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                    <div><label className={lbl}>Заболевание почек (ХБП)</label><select value={form.ckd} onChange={e=>f({ckd:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                    <div><label className={lbl}>Аутоиммунные болезни (СКВ, АФС)</label><select value={form.autoimmune} onChange={e=>f({autoimmune:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                    <div><label className={lbl}>Тромбоз в анамнезе</label><select value={form.thrombosis} onChange={e=>f({thrombosis:e.target.value})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
-                    <div><label className={lbl}>Лекарства с риском при беременности</label><select value={form.risky_meds} onChange={e=>f({risky_meds:e.target.value})} className={sel} title="Статины, иАПФ, БРА, ретиноиды, противоэпилептические, антикоагулянты"><option value="">— Не указано</option><option>Нет</option><option>Да</option></select></div>
+                    <div><label className={lbl}>Хроническая АГ</label><StableSelect value={form.chronic_htn} onChange={v=>f({chronic_htn:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Сахарный диабет 1 или 2 типа</label><StableSelect value={form.dm} onChange={v=>f({dm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Заболевание почек (ХБП)</label><StableSelect value={form.ckd} onChange={v=>f({ckd:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Аутоиммунные болезни (СКВ, АФС)</label><StableSelect value={form.autoimmune} onChange={v=>f({autoimmune:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Тромбоз в анамнезе</label><StableSelect value={form.thrombosis} onChange={v=>f({thrombosis:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Лекарства с риском при беременности</label><StableSelect value={form.risky_meds} onChange={v=>f({risky_meds:v})} className={sel} title="Статины, иАПФ, БРА, ретиноиды, противоэпилептические, антикоагулянты"><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
                   </div>
                 </div>
               ) : (
@@ -1204,11 +1238,11 @@ export default function App() {
                     <p className="text-sm font-black text-slate-700">Сохранять черновик на этом устройстве</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">Данные хранятся только в браузере (localStorage), не передаются на сервер</p>
                   </div>
-                  <select value={form.consent_local_save} onChange={e=>f({consent_local_save:e.target.value})}
+                  <StableSelect value={form.consent_local_save} onChange={v=>f({consent_local_save:v})}
                     className="text-xs font-black border rounded-lg px-3 py-2 outline-none bg-white">
                     <option value="Да">Да, сохранять</option>
                     <option value="Нет">Нет, не сохранять</option>
-                  </select>
+                  </StableSelect>
                 </div>
               </div>
 
@@ -1395,52 +1429,41 @@ export default function App() {
 
     return (
       <div className="flex flex-col h-full">
-        {/* Шапка результатов */}
-        <div className="bg-white border-b px-4 md:px-8 py-4 md:py-6 shrink-0 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-            <div>
-              <div className="flex flex-wrap items-center gap-3 mb-1">
-                <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase">Медицинское заключение</h2>
-                {form.patient_name && <span className="text-sm font-bold text-slate-500 normal-case">— {form.patient_name}</span>}
-                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${valid.reliability==='Высокая' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                  {valid.reliability==='Высокая' ? 'Расширенный результат' : 'Базовый результат'}
+        {/* Шапка результатов — максимально компактная на мобильном */}
+        <div className="bg-white border-b px-3 md:px-8 py-2 md:py-3 shrink-0 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-sm font-black text-slate-900 uppercase shrink-0">Заключение</span>
+                {form.patient_name && <span className="text-xs text-slate-400 truncate max-w-[130px] hidden xs:block">— {form.patient_name}</span>}
+                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border hidden sm:inline-block ${valid.reliability==='Высокая' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                  {valid.reliability==='Высокая' ? 'Расширенный' : 'Базовый'}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide items-center">
-                <span>Дата: {new Date().toLocaleDateString('ru-RU')}</span>
-                <span>•</span>
-                <span className={valid.reliability==='Высокая'?'text-green-600':'text-amber-600'}>
-                  Достоверность: {valid.reliability}
-                </span>
-                <span className="normal-case font-normal text-slate-400 text-[9px]">
-                  {valid.reliability==='Высокая'
-                    ? '(все данные заполнены, включая лабораторию)'
-                    : valid.reliability==='Средняя'
-                    ? '(данные заполнены, лабораторные анализы отсутствуют)'
-                    : '(данные заполнены частично)'}
-                </span>
-              </div>
+              <p className="text-[9px] text-slate-400 mt-0.5 hidden md:block">
+                {new Date().toLocaleDateString('ru-RU')} · {valid.reliability==='Высокая' ? 'все данные, включая лабораторию' : 'без лаборатории'}
+              </p>
             </div>
-            <div className="flex flex-wrap gap-2 shrink-0">
+            <div className="flex gap-1 shrink-0 no-print">
               <button onClick={() => window.print()}
-                className="px-4 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-black uppercase hover:bg-slate-700 transition flex items-center gap-2 no-print">
-                <FileDown className="w-3.5 h-3.5"/> Печать / PDF
+                className="px-2 py-1.5 bg-slate-800 text-white rounded-lg text-[9px] font-black uppercase hover:bg-slate-700 transition flex items-center gap-1">
+                <FileDown className="w-3 h-3"/> PDF
               </button>
               <button onClick={() => { setView('wizard'); setStep(1); }}
-                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-black uppercase hover:bg-slate-200 transition flex items-center gap-2 no-print">
-                <Info className="w-3.5 h-3.5"/> Изменить данные
+                className="px-2 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[9px] font-black uppercase hover:bg-slate-200 transition hidden sm:block">
+                Изменить
               </button>
               <button onClick={() => { setView('dashboard'); setReport(''); }}
-                className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-black uppercase hover:bg-slate-200 transition shrink-0 no-print">Закрыть</button>
+                className="px-2 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[9px] font-black uppercase hover:bg-slate-200 transition">✕</button>
             </div>
           </div>
         </div>
 
         {/* Вкладки */}
-        <div className="bg-white border-b px-4 md:px-8 flex gap-4 md:gap-8 shrink-0 overflow-x-auto">
+        <div className="bg-white border-b px-4 md:px-8 flex gap-3 md:gap-8 shrink-0 overflow-x-auto">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`py-4 border-b-4 text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition ${tab===t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>{t.l}</button>
+              className={`py-2.5 md:py-4 border-b-4 text-[10px] md:text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition ${tab===t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>{t.l}</button>
           ))}
         </div>
 
