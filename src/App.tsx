@@ -335,17 +335,19 @@ const StableSelect = React.memo(function StableSelect({
 }) {
   const [local, setLocal] = React.useState(value);
   const focused = React.useRef(false);
+
   React.useEffect(() => {
     if (!focused.current) setLocal(value);
   }, [value]);
+
   return (
     <select
       value={local}
       className={className}
       title={title}
-      onChange={e => { const v = e.target.value; setLocal(v); onChange(v); }}
+      onChange={e => setLocal(e.target.value)}
       onFocus={() => { focused.current = true; }}
-      onBlur={() => { focused.current = false; onChange(local); }}
+      onBlur={e => { focused.current = false; onChange(e.target.value); }}
     >
       {children}
     </select>
