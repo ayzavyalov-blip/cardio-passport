@@ -1165,52 +1165,38 @@ export default function App() {
                 </div>
               </div>
 
-              {/* УСЛОВНЫЙ: Акушерский анамнез — только если были беременности */}
-              {(form.miscarriages && form.miscarriages !== '0') || form.pe_own || form.gdm || form.fgr || form.preterm || form.stillbirth ? (
-                <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
-                  <div className="flex items-center justify-between border-b pb-3 mb-4">
-                    <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest">Акушерский анамнез</h3>
-                    <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-lg">Заполняется при наличии прошлых беременностей</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label className={lbl}>Преэклампсия у самой пациентки</label><StableSelect value={form.pe_own} onChange={v=>f({pe_own:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                    <div><label className={lbl}>Гестационный диабет</label><StableSelect value={form.gdm} onChange={v=>f({gdm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                    <div><label className={lbl}>Задержка роста плода</label><StableSelect value={form.fgr} onChange={v=>f({fgr:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                    <div><label className={lbl}>Преждевременные роды</label><StableSelect value={form.preterm} onChange={v=>f({preterm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                    <div><label className={lbl}>Антенатальная гибель плода</label><StableSelect value={form.stillbirth} onChange={v=>f({stillbirth:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                  </div>
+              {/* Акушерский анамнез — всегда открыт */}
+              <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
+                <div className="flex items-center justify-between border-b pb-3 mb-4">
+                  <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest">Акушерский анамнез</h3>
+                  <span className="text-[10px] text-slate-400">При наличии прошлых беременностей</span>
                 </div>
-              ) : (
-                <button
-                  onClick={() => f({pe_own:'', gdm:'', fgr:'', preterm:'', stillbirth:'miscarriages_trigger'})}
-                  className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-blue-300 hover:text-blue-500 transition flex items-center justify-center gap-2">
-                  <span className="text-lg leading-none">+</span> Были беременности — заполнить акушерский анамнез
-                </button>
-              )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label className={lbl}>Преэклампсия у самой пациентки</label><StableSelect value={form.pe_own} onChange={v=>f({pe_own:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Гестационный диабет</label><StableSelect value={form.gdm} onChange={v=>f({gdm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Задержка роста плода</label><StableSelect value={form.fgr} onChange={v=>f({fgr:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Преждевременные роды</label><StableSelect value={form.preterm} onChange={v=>f({preterm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Антенатальная гибель плода</label><StableSelect value={form.stillbirth} onChange={v=>f({stillbirth:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                </div>
+              </div>
 
-              {/* УСЛОВНЫЙ: Соматический анамнез — аккордеон */}
-              {(form.chronic_htn === 'Да' || form.dm === 'Да' || form.ckd === 'Да' || form.autoimmune === 'Да' || form.thrombosis === 'Да' || form.risky_meds === 'Да') ? (
-                <div className="bg-white p-5 md:p-6 rounded-2xl border border-amber-200 bg-amber-50/30">
-                  <div className="flex items-center justify-between border-b border-amber-200 pb-3 mb-4">
-                    <h3 className="font-black text-xs uppercase text-amber-700 tracking-widest">Соматический анамнез</h3>
+              {/* Соматический анамнез — всегда открыт */}
+              <div className={`p-5 md:p-6 rounded-2xl border ${(form.chronic_htn==='Да'||form.dm==='Да'||form.ckd==='Да'||form.autoimmune==='Да'||form.thrombosis==='Да'||form.risky_meds==='Да') ? 'border-amber-200 bg-amber-50/30' : 'bg-white border-slate-200'}`}>
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                  <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest">Соматический анамнез</h3>
+                  {(form.chronic_htn==='Да'||form.dm==='Да'||form.ckd==='Да'||form.autoimmune==='Да'||form.thrombosis==='Да'||form.risky_meds==='Да') && (
                     <span className="text-[10px] text-amber-700 font-bold bg-amber-100 px-2 py-1 rounded-lg">Выявлены факторы высокого риска</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label className={lbl}>Хроническая АГ</label><StableSelect value={form.chronic_htn} onChange={v=>f({chronic_htn:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                    <div><label className={lbl}>Сахарный диабет 1 или 2 типа</label><StableSelect value={form.dm} onChange={v=>f({dm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                    <div><label className={lbl}>Заболевание почек (ХБП)</label><StableSelect value={form.ckd} onChange={v=>f({ckd:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                    <div><label className={lbl}>Аутоиммунные болезни (СКВ, АФС)</label><StableSelect value={form.autoimmune} onChange={v=>f({autoimmune:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                    <div><label className={lbl}>Тромбоз в анамнезе</label><StableSelect value={form.thrombosis} onChange={v=>f({thrombosis:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                    <div><label className={lbl}>Лекарства с риском при беременности</label><StableSelect value={form.risky_meds} onChange={v=>f({risky_meds:v})} className={sel} title="Статины, иАПФ, БРА, ретиноиды, противоэпилептические, антикоагулянты"><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                  </div>
+                  )}
                 </div>
-              ) : (
-                <button
-                  onClick={() => f({chronic_htn:'Нет'})}
-                  className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-amber-300 hover:text-amber-600 transition flex items-center justify-center gap-2">
-                  <span className="text-lg leading-none">+</span> Есть хронические заболевания — заполнить соматический анамнез
-                </button>
-              )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label className={lbl}>Хроническая АГ</label><StableSelect value={form.chronic_htn} onChange={v=>f({chronic_htn:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Сахарный диабет 1 или 2 типа</label><StableSelect value={form.dm} onChange={v=>f({dm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Заболевание почек (ХБП)</label><StableSelect value={form.ckd} onChange={v=>f({ckd:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Аутоиммунные болезни (СКВ, АФС)</label><StableSelect value={form.autoimmune} onChange={v=>f({autoimmune:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Тромбоз в анамнезе</label><StableSelect value={form.thrombosis} onChange={v=>f({thrombosis:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Лекарства с риском при беременности</label><StableSelect value={form.risky_meds} onChange={v=>f({risky_meds:v})} className={sel} title="Статины, иАПФ, БРА, ретиноиды, противоэпилептические, антикоагулянты"><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                </div>
+              </div>
             </div>
           )}
 
