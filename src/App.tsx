@@ -335,6 +335,7 @@ const StableSelect = React.memo(function StableSelect({
 }) {
   const [local, setLocal] = React.useState(value);
   const focused = React.useRef(false);
+  const prevValue = React.useRef(value);
 
   React.useEffect(() => {
     if (!focused.current) setLocal(value);
@@ -346,8 +347,14 @@ const StableSelect = React.memo(function StableSelect({
       className={className}
       title={title}
       onChange={e => setLocal(e.target.value)}
-      onFocus={() => { focused.current = true; }}
-      onBlur={e => { focused.current = false; onChange(e.target.value); }}
+      onFocus={() => { focused.current = true; prevValue.current = local; }}
+      onBlur={e => {
+        focused.current = false;
+        // Обновляем родителя ТОЛЬКО если значение реально изменилось
+        if (e.target.value !== prevValue.current) {
+          onChange(e.target.value);
+        }
+      }}
     >
       {children}
     </select>
