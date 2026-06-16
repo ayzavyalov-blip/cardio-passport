@@ -35,12 +35,19 @@ const RD = {
     ferritin:    { min: 1, max: 2000,  label: "Ферритин (мкг/л)" },
   },
   lab_ref: {
-    cholesterol: { hi: 5.2,  unit: "ммоль/л" },
-    uric_acid:   { hi: 360,  lo: 155, unit: "мкмоль/л" },
-    albumin:     { lo: 35,   hi: 52,  unit: "г/л" },
-    tsh:         { lo: 0.4,  hi: 2.5, unit: "мЕд/л" },
-    glucose:     { hi: 5.6,  unit: "ммоль/л" },
-    ferritin:    { lo: 30,   unit: "мкг/л" },
+    cholesterol: { hi: 5.2,  unit: "ммоль/л", note: "КР МЗ РФ «Нарушения липидного обмена» 2023" },
+    uric_acid:   { hi: 360,  lo: 155, unit: "мкмоль/л", note: "EULAR 2022; МАРС 2024" },
+    albumin:     { lo: 35,   hi: 52,  unit: "г/л", note: "ESPEN 2021; норма вне беременности" },
+    // ТТГ: целевое значение в прегравидарном периоде <2,5 мЕд/л (МАРС 2024, протокол КЗ МЗ 2023)
+    // Нижняя граница 0,4 мЕд/л — общепринятый консенсус (NHANES-III, Biondi 2019)
+    tsh:         { lo: 0.4,  hi: 2.5, unit: "мЕд/л", note: "МАРС 2024: целевой ТТГ <2,5 мЕд/л до зачатия" },
+    // Глюкоза: порог риска ГСД в прегравидарном периоде — 5,1 ммоль/л (ВОЗ 2013, КР МЗ РФ «ГСД» 2020)
+    // 5,6 ммоль/л — диагностический критерий нарушения гликемии натощак (IFG по ВОЗ 1999/2006)
+    // В прегравидарном периоде более актуален порог 5,1 как фактор риска ГСД
+    glucose:     { hi: 5.1,  unit: "ммоль/л", note: "ВОЗ 2013; КР МЗ РФ «ГСД» 2020: ≥5,1 — фактор риска ГСД" },
+    // Ферритин: целевой уровень в прегравидарном периоде >40 мкг/л (МАРС 2024 v3.1)
+    // Порог латентного дефицита — 30 мкг/л (WHO 2020); оптимальный прегравидарный — >40 мкг/л
+    ferritin:    { lo: 30,   hi_opt: 40, unit: "мкг/л", note: "МАРС 2024: целевой ферритин >40 мкг/л до зачатия" },
   },
   red_flags: [
     { id:"RF-000", cond:(d,m)=> m.avgSys>=180||m.avgDia>=110, level:"Красный", urgency:"Экстренно", title:"Гипертонический криз / АГ 3 ст.", action:"Немедленный вызов скорой помощи или самостоятельное обращение в приёмный покой", desc:"САД ≥ 180 или ДАД ≥ 110 мм рт.ст." },
@@ -192,7 +199,7 @@ const RD = {
     { short:"Рекомендации ВОЗ по физактивности 2020", full:"Глобальные рекомендации по физической активности и малоподвижному образу жизни. Всемирная организация здравоохранения (ВОЗ), 2020 г." },
     { short:"ESHRE PCOS 2023", full:"International evidence-based guideline for the assessment and management of polycystic ovary syndrome. ESHRE/ASRM, 2023. Hum Reprod Open. 2023;2023(2):hoad036." },
     { short:"ESPEN 2021", full:"Weimann A, et al. ESPEN Practical Guideline: Clinical Nutrition in Surgery. Clinical Nutrition. 2021;40(7):4745–4761. DOI: 10.1016/j.clnu.2021.03.031." },
-    { short:"ESC Guidelines АГ 2024", full:"McEvoy JW, et al. 2024 ESC Guidelines for the management of elevated blood pressure and hypertension. European Heart Journal. 2024;45(38):3912–4018. DOI: 10.1093/eurheartj/ehae178. (Заменяет совместные руководства ESC Guidelines АГ 2024.)" },
+    { short:"ESC Guidelines АГ 2024", full:"McEvoy JW, et al. 2024 ESC Guidelines for the management of elevated blood pressure and hypertension. European Heart Journal. 2024;45(38):3912–4018. DOI: 10.1093/eurheartj/ehae178. Ключевое изменение: введена новая категория «повышенное АД» (120–139/70–89 мм рт.ст.); определение АГ сохранено ≥ 140/90. Целевое значение на фоне терапии — 120–129/70–79 мм рт.ст. (Заменяет совместные руководства ESC/ESH 2018.)" },
     { short:"EULAR Подагра 2022", full:"Richette P, et al. 2022 updated EULAR recommendations for the diagnosis and management of gout. Annals of the Rheumatic Diseases. 2023;82(1):21–30. DOI: 10.1136/ard-2022-222734." },
   ],
 };
@@ -239,6 +246,7 @@ const DEMO_FORM = {
 };
 
 // ─── УТИЛИТЫ ──────────────────────────────────────────────────────────────────
+const LAB_KEYS = ['cholesterol','uric_acid','albumin','tsh','glucose','ferritin'] as const;
 // Надёжный парсер чисел: принимает запятую как разделитель (4,8 → 4.8), пустую строку → null
 function parseNum(value: string | number | undefined | null): number | null {
   if (value === null || value === undefined) return null;
@@ -281,8 +289,43 @@ function riskColors(cat) {
 // ─── СТАБИЛЬНЫЙ SELECT ───────────────────────────────────────────────────────
 // Вынесен за пределы App — предотвращает потерю фокуса на Android Chrome.
 // Синхронизирует значение с родителем только onBlur (аналогично NumInput).
-// ─── ОСНОВНОЕ ПРИЛОЖЕНИЕ ──────────────────────────────────────────────────────
-// ─── СТАБИЛЬНЫЙ ЧИСЛОВОЙ ИНПУТ ───────────────────────────────────────────────
+// ─── СТАБИЛЬНЫЙ ТЕКСТОВЫЙ ИНПУТ ─────────────────────────────────────────────
+// Аналог NumInput для текстовых полей — обновляет родителя только onBlur
+const StableTextInput = React.memo(function StableTextInput({
+  value, onChange, className, placeholder, type = 'text'
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+  placeholder?: string;
+  type?: string;
+}) {
+  const [local, setLocal] = React.useState(value);
+  const focused = React.useRef(false);
+  const prevValue = React.useRef(value);
+
+  React.useEffect(() => {
+    if (!focused.current) setLocal(value);
+  }, [value]);
+
+  return (
+    <input
+      type={type}
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onFocus={() => { focused.current = true; prevValue.current = local; }}
+      onBlur={e => {
+        focused.current = false;
+        if (e.target.value !== prevValue.current) onChange(e.target.value);
+      }}
+      className={className}
+      placeholder={placeholder}
+      autoComplete="off"
+      autoCorrect="off"
+      spellCheck={false}
+    />
+  );
+});
 // Ключевое решение для Android Chrome:
 // - Хранит значение в ЛОКАЛЬНОМ useState — ни один внешний рендер не трогает поле
 // - Обновляет родителя только onBlur (когда пользователь уходит с поля)
@@ -372,23 +415,43 @@ export default function App() {
   const [history, setHistory]   = useState([]);
   const [calcHistory, setCalcHistory] = useState([]);
   const [showSources, setShowSources] = useState(false);
-  const f = useCallback((patch: Record<string,any>) => setForm((prev: any) => {
-    const next = {...prev, ...patch};
-    try {
-      if (next.consent_local_save !== 'Нет') {
-        localStorage.setItem('cardio_draft', JSON.stringify(next));
-      } else {
-        localStorage.removeItem('cardio_draft');
-      }
-    } catch {}
-    return next;
-  }), []);
+  const f = useCallback((patch: Record<string,any>) => {
+    // Сохраняем позицию скролла ДО обновления формы
+    const scrollEl = (window as any).__wizardScroll as HTMLElement | undefined;
+    const savedScroll = scrollEl?.scrollTop ?? 0;
+
+    setForm((prev: any) => {
+      const next = {...prev, ...patch};
+      try {
+        if (next.consent_local_save !== 'Нет') {
+          localStorage.setItem('cardio_draft', JSON.stringify(next));
+        } else {
+          localStorage.removeItem('cardio_draft');
+        }
+      } catch {}
+      return next;
+    });
+
+    // Восстанавливаем скролл ПОСЛЕ ре-рендера
+    if (savedScroll > 0) {
+      requestAnimationFrame(() => {
+        const el = (window as any).__wizardScroll as HTMLElement | undefined;
+        if (el) el.scrollTop = savedScroll;
+      });
+    }
+  }, []);
 
   // Восстановление черновика при первой загрузке
   useEffect(() => {
     try {
       const saved = localStorage.getItem('cardio_draft');
-      if (saved) { const parsed = JSON.parse(saved); if (parsed.age) setForm(parsed); }
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Восстанавливаем если есть хоть какие-то данные (ФИО или возраст)
+        if (parsed.patient_name || parsed.age) {
+          setForm(prev => ({...DEFAULT_FORM, ...parsed}));
+        }
+      }
     } catch {}
   }, []);
 
@@ -404,7 +467,7 @@ export default function App() {
     const nutritionRisk = form.figo_veg === 'Мало' || form.figo_fastfood === 'Да';
 
     // Полнота лабораторного блока
-    const labKeys = ['cholesterol','uric_acid','albumin','tsh','glucose','ferritin'];
+    const labKeys = LAB_KEYS;
     const filledLabs = labKeys.filter(k => { const v = parseNum(form[k]); return v !== null; });
     const labsCompleteness = Math.round((filledLabs.length / labKeys.length) * 100);
 
@@ -467,23 +530,32 @@ export default function App() {
     if (metrics.bpPairsCount === 0 && step === 2)
       fe.bp_required = 'Введите хотя бы одну валидную пару САД/ДАД';
 
-    // Шаг 3: лаборатория с parseNum
-    const labKeys = ['cholesterol','uric_acid','albumin','tsh','glucose','ferritin'];
-    labKeys.forEach(key => {
+    // Шаг 3: лаборатория с parseNum и прегравидарными порогами
+    ['cholesterol','uric_acid','albumin','tsh','glucose','ferritin'].forEach(key => {
       const val = parseNum(form[key]);
       if (val === null) return;
       const v = vr[key]; if (!v) return;
       if (val < v.min || val > v.max) { fe[key] = `${v.min}–${v.max}`; return; }
       const ref = RD.lab_ref[key];
-      if (ref?.hi && val > ref.hi) labInt[key] = { text:'Выше нормы', color:'text-orange-600' };
-      else if (ref?.lo && val < ref.lo) labInt[key] = { text:'Ниже нормы', color:'text-blue-600' };
-      else labInt[key] = { text:'В норме', color:'text-green-600' };
+      // Ферритин: две ступени — субоптимальный (30–39) и дефицит (<30)
+      if (key === 'ferritin') {
+        if (val < 30) labInt[key] = { text:'↓ Дефицит (< 30 мкг/л)', color:'text-red-600' };
+        else if (val < 40) labInt[key] = { text:'↓ Субоптимально (< 40 мкг/л)', color:'text-amber-600' };
+        else labInt[key] = { text:'✓ Целевой (≥ 40 по МАРС 2024)', color:'text-green-600' };
+      } else if (key === 'glucose') {
+        if (val >= 5.1) labInt[key] = { text:'↑ Фактор риска ГСД (≥ 5,1)', color:'text-orange-600' };
+        else labInt[key] = { text:'✓ В норме', color:'text-green-600' };
+      } else {
+        if (ref?.hi && val > ref.hi) labInt[key] = { text:'↑ Выше нормы', color:'text-orange-600' };
+        else if (ref?.lo && val < ref.lo) labInt[key] = { text:'↓ Ниже нормы', color:'text-blue-600' };
+        else labInt[key] = { text:'✓ В норме', color:'text-green-600' };
+      }
     });
 
     // Блокировки по шагам
     const step1Fields = ['patient_name','age','active_min'];
     const step2Fields = ['height','weight','waist','sys1','dia1','sys2','dia2','sys3','dia3','bp_required'];
-    const step3Fields = labKeys;
+    const step3Fields = [...LAB_KEYS];
     const errorsForStep = (fields: string[]) => fields.some(k => fe[k]);
     const currentStepInvalid = step===1 ? errorsForStep(step1Fields) : step===2 ? errorsForStep(step2Fields) : errorsForStep(step3Fields);
 
@@ -563,10 +635,15 @@ export default function App() {
     if (waist !== null && waist >= 88) add('G','Выраженное абдоминальное ожирение (≥ 88 см)', 4);
     else if (waist !== null && waist >= 80) add('G','Абдоминальное ожирение (80–87 см)', 2);
 
-    // АД — только по валидным парам
-    if (metrics.avgSys >= 160 || metrics.avgDia >= 100) add('G','АД ≥ 160/100 мм рт.ст. (АГ 2 ст.)', 8);
-    else if (metrics.avgSys >= 140 || metrics.avgDia >= 90) add('G','АД ≥ 140/90 мм рт.ст. (АГ 1 ст.)', 6);
-    else if (metrics.avgSys >= 130 || metrics.avgDia >= 85) add('G','АД ≥ 130/85 мм рт.ст. (высокое нормальное)', 3);
+    // АД — только по валидным парам; пороги по ESC Guidelines 2024 + КР МЗ РФ «АГ» 2024
+    // ESC 2024: новая категория "elevated BP" = 120–139/70–89; АГ = ≥140/90
+    // КР РФ сохраняет порог АГ ≥140/90; высокое нормальное = 130–139/85–89 (по КР 2024)
+    if (metrics.avgSys >= 180 || metrics.avgDia >= 110)       add('G','АД ≥ 180/110 мм рт.ст. (АГ 3 ст.)', 10);
+    else if (metrics.avgSys >= 160 || metrics.avgDia >= 100)  add('G','АД ≥ 160/100 мм рт.ст. (АГ 2 ст.)', 8);
+    else if (metrics.avgSys >= 140 || metrics.avgDia >= 90)   add('G','АД ≥ 140/90 мм рт.ст. (АГ 1 ст.)', 6);
+    else if (metrics.avgSys >= 130 || metrics.avgDia >= 85)   add('G','АД 130–139/85–89 мм рт.ст. (высокое нормальное)', 3);
+    // ESC 2024: 120–129/70–84 = "elevated BP" — риск выше нормального, но ниже высокого нормального
+    else if (metrics.avgSys >= 120 || metrics.avgDia >= 70)   add('G','АД 120–129/70–84 мм рт.ст. (повышенное по ESC 2024)', 1);
 
     // Соматический анамнез — попадает в домен A
     if (form.chronic_htn === 'Да')  add('A','Хроническая артериальная гипертензия', 4);
@@ -587,8 +664,10 @@ export default function App() {
     if (ua   !== null && ua   > 360)          add('H','Гиперурикемия (> 360 мкмоль/л)', 2);
     if (alb  !== null && alb  < 35)           add('H','Гипоальбуминемия (< 35 г/л)', 4);
     if (tsh  !== null && (tsh < 0.4 || tsh > 2.5)) add('H','Отклонение ТТГ от нормы', 3);
-    if (glc  !== null && glc  > 5.6)          add('H','Нарушение гликемии натощак (> 5,6 ммоль/л)', 3);
-    if (fer  !== null && fer  < 30)           add('H','Латентный дефицит железа (ферритин < 30 мкг/л)', 2);
+    if (glc  !== null && glc  >= 5.1)          add('H','Глюкоза натощак ≥ 5,1 ммоль/л (фактор риска ГСД)', 3);
+    // Ферритин: МАРС 2024 v3.1 — целевой уровень в прегравидарном периоде >40 мкг/л
+    if (fer !== null && fer < 30)      add('H','Дефицит железа: ферритин < 30 мкг/л', 3);
+    else if (fer !== null && fer < 40) add('H','Субоптимальный ферритин 30–39 мкг/л (целевой ≥ 40 по МАРС 2024)', 1);
 
     breakdown.sort((a, b) => b.pts - a.pts);
     const top5 = breakdown.slice(0, 5);
@@ -621,7 +700,7 @@ export default function App() {
     t += `.\n`;
     if (metrics.avgSys > 0) t += `ИМТ: ${metrics.bmi}. Среднее АД: ${metrics.avgSys}/${metrics.avgDia} (MAP: ${metrics.map}).\n`;
 
-    t += `\n[ МЕТОДОЛОГИЧЕСКАЯ ОГОВОРКА ]\nИнтегральный балл является экспертной эвристической моделью на основе факторов риска из КР МЗ РФ, МАРС 2024, FIGO, ВОЗ, ESC/ESH. Весовые коэффициенты не прошли клиническую валидацию. Результат не устанавливает диагноз и требует интерпретации врачом.\n`;
+    t += `\n[ МЕТОДОЛОГИЧЕСКАЯ ОГОВОРКА ]\nИнструмент является экспертной моделью поддержки врачебного решения, построенной на основе факторов риска из актуальных клинических рекомендаций (КР МЗ РФ, МАРС 2024, FIGO, ВОЗ, ESC 2024). Весовые коэффициенты и пороги категорий разработаны экспертно; проспективная клиническая валидация на когорте пациентов не проводилась. Интегральный балл не является диагностическим инструментом и не заменяет очную консультацию врача. Прегравидарные лабораторные пороги: ТТГ < 2,5 мЕд/л (МАРС 2024), глюкоза < 5,1 ммоль/л (ВОЗ 2013/КР ГСД), ферритин ≥ 40 мкг/л (МАРС 2024).\n`;
 
     if (scoring.top5.length) {
       t += `\n[ ВЫЯВЛЕННЫЕ ФАКТОРЫ РИСКА ]\n`;
@@ -746,7 +825,7 @@ export default function App() {
                 </button>
               </div>
               <p className="mt-4 text-[10px] text-slate-600 leading-relaxed max-w-lg">
-                ⚕ Не заменяет очную консультацию врача. Весовые коэффициенты требуют клинической валидации.
+                ⚕ Инструмент поддержки врачебного решения. Не заменяет очную консультацию специалиста. Лабораторные пороги — прегравидарные целевые значения (МАРС 2024, ВОЗ 2013). Весовые коэффициенты требуют клинической валидации.
               </p>
             </div>
 
@@ -1006,7 +1085,8 @@ export default function App() {
         })()}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-36" style={{overscrollBehavior:'contain'}}>
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-36" style={{overscrollBehavior:'contain'}}
+        ref={el => { if (el) (window as any).__wizardScroll = el; }}>
         <div className="max-w-3xl mx-auto space-y-6">
 
           {step === 1 && (
@@ -1017,7 +1097,7 @@ export default function App() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <label className={lbl}>ФИО пациентки <span className="text-red-500">*</span></label>
-                    <input type="text" value={form.patient_name} onChange={v=>f({patient_name:v})}
+                    <StableTextInput value={form.patient_name} onChange={v=>f({patient_name:v})}
                       className={`${inp} ${errBorder('patient_name')}`} placeholder="Фамилия Имя Отчество"/>
                     <Err k="patient_name"/>
                   </div>
@@ -1210,9 +1290,9 @@ export default function App() {
                     { k:'cholesterol', l:'Общий холестерин', ref:'Норма: < 5,2 ммоль/л', unit:'ммоль/л' },
                     { k:'uric_acid',   l:'Мочевая кислота', ref:'Норма: 155–360 мкмоль/л', unit:'мкмоль/л' },
                     { k:'albumin',     l:'Альбумин сыворотки', ref:'Норма: 35–52 г/л', unit:'г/л' },
-                    { k:'tsh',         l:'ТТГ', ref:'Норма: 0,4–2,5 мЕд/л (прегравид.)', unit:'мЕд/л' },
-                    { k:'glucose',     l:'Глюкоза натощак', ref:'Норма: < 5,6 ммоль/л', unit:'ммоль/л' },
-                    { k:'ferritin',    l:'Ферритин', ref:'Норма: ≥ 30 мкг/л', unit:'мкг/л' },
+                    { k:'tsh',         l:'ТТГ', ref:'Цель до зачатия: 0,4–2,5 мЕд/л', unit:'мЕд/л' },
+                    { k:'glucose',     l:'Глюкоза натощак', ref:'Порог риска ГСД: < 5,1 ммоль/л', unit:'ммоль/л' },
+                    { k:'ferritin',    l:'Ферритин', ref:'Цель до зачатия: ≥ 40 мкг/л', unit:'мкг/л' },
                   ].map(({k,l,ref,unit}) => {
                     const vi = valid.labInt[k];
                     return (
@@ -1375,9 +1455,9 @@ export default function App() {
                   <div className={`p-4 rounded-xl border text-center ${metrics.avgSys >= 140 ? 'bg-red-50 border-red-200' : metrics.avgSys >= 130 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
                     <p className="text-2xl font-black text-slate-900">{metrics.avgSys}/{metrics.avgDia}</p>
                     <p className="text-xs font-bold text-slate-600 mt-1">АД мм рт.ст.</p>
-                    <p className="text-[10px] text-slate-500">норма &lt; 130/85</p>
-                    <p className={`text-[10px] font-black mt-1 ${metrics.avgSys >= 140 ? 'text-red-600' : metrics.avgSys >= 130 ? 'text-amber-600' : 'text-green-600'}`}>
-                      {metrics.avgSys >= 140 ? '↑ Повышено' : metrics.avgSys >= 130 ? '↑ Высокое норм.' : '✓ Норма'}
+                    <p className="text-[10px] text-slate-500">норма &lt; 120/70 (ESC 2024)</p>
+                    <p className={`text-[10px] font-black mt-1 ${metrics.avgSys >= 140 ? 'text-red-600' : metrics.avgSys >= 130 ? 'text-amber-600' : metrics.avgSys >= 120 ? 'text-yellow-600' : 'text-green-600'}`}>
+                      {metrics.avgSys >= 140 ? '↑ Повышено' : metrics.avgSys >= 130 ? '↑ Высокое норм.' : metrics.avgSys >= 120 ? '↑ Повышенное (ESC)' : '✓ Норма'}
                     </p>
                   </div>
                 )}
@@ -1640,8 +1720,12 @@ export default function App() {
                 <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
                   <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight border-b pb-3 mb-4">Детализация расчёта</h3>
                   <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl text-sm text-blue-900 leading-relaxed">
-                    <p className="font-black mb-1">Методологическая оговорка</p>
-                    <p>Интегральный балл является <b>экспертной эвристической моделью</b>, построенной на основе факторов риска из КР МЗ РФ, МАРС 2024, FIGO, ВОЗ и ESC/ESH. Весовые коэффициенты (+2, +3, +6 и т.д.) и пороги категорий (0–5, 6–11, 12–17, ≥18) разработаны экспертно и не прошли клиническую валидацию на проспективной выборке. Результат не устанавливает диагноз и требует интерпретации врачом.</p>
+                    <p className="font-black mb-2">Методологическая оговорка</p>
+                    <p className="mb-2">Интегральный балл — <b>экспертная балльная модель</b> поддержки клинического решения. Факторы риска основаны на актуальных КР МЗ РФ, МАРС 2024 v3.1, FIGO, ВОЗ, ESC 2024 и ESHRE 2023.</p>
+                    <p className="mb-2">Весовые коэффициенты и пороги категорий установлены экспертным консенсусом. <b>Проспективная валидация на когорте пациенток 22–25 лет не проводилась.</b> Источники подтверждают сами факторы риска, но не баллы за них.</p>
+                    <p className="mb-2 text-xs">Лабораторные пороги — прегравидарные целевые значения (не общепопуляционные нормы): ТТГ &lt; 2,5 мЕд/л (МАРС 2024), глюкоза ≥ 5,1 ммоль/л (КР ГСД 2024, ВОЗ-критерий риска ГСД), ферритин: дефицит &lt; 30, субоптимально 30–39, целевой ≥ 40 мкг/л (МАРС 2024).</p>
+                    <p className="mb-1 text-xs">АД: пороги по КР МЗ РФ «АГ» 2024 + ESC 2024. ESC 2024 ввёл новую категорию «повышенное АД» (120–139/70–89), сохранив определение АГ ≥ 140/90. В скоринге 120–129/70–84 = +1 балл; 130–139/85–89 = +3; ≥ 140/90 = +6; ≥ 160/100 = +8; ≥ 180/110 = +10.</p>
+                    <p className="text-blue-800 text-xs italic">Инструмент не заменяет клиническое суждение врача и не устанавливает диагноз.</p>
                   </div>
                 </div>
 
