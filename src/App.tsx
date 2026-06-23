@@ -8,7 +8,7 @@ import {
 
 // ─── СПРАВОЧНИК ПРАВИЛ ────────────────────────────────────────────────────────
 const RD = {
-  version: "15.06.2026",
+  version: "23.06.2026",
   target_age: { min: 22, max: 25 },
   domains: {
     A: { name: "Семейный анамнез", max: 10 },
@@ -747,7 +747,7 @@ export default function App() {
     return t;
   }, [form, scoring, valid, metrics]);
 
-  const isOutlier = Number(form.age) < RD.target_age.min || Number(form.age) > RD.target_age.max;
+  const isOutlier = form.age !== '' && (Number(form.age) < RD.target_age.min || Number(form.age) > RD.target_age.max);
 
   // ── HEADER ──────────────────────────────────────────────────────────────────
   const Header = () => (
@@ -981,11 +981,11 @@ export default function App() {
               </h3>
               <div className="space-y-3">
                 <div className="flex gap-3 p-3 bg-slate-50 rounded-xl">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest w-20 shrink-0 pt-0.5">Базовый</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 pt-0.5 w-16">Базовый</span>
                   <span className="text-xs text-slate-600 leading-relaxed">Анамнез, антропометрия, АД — 3 шага</span>
                 </div>
                 <div className="flex gap-3 p-3 bg-blue-50 rounded-xl">
-                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest w-20 shrink-0 pt-0.5">Расширенный</span>
+                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest shrink-0 pt-0.5 w-16 leading-tight">Расши-<br/>ренный</span>
                   <span className="text-xs text-slate-600 leading-relaxed">Дополнительно: ТТГ, глюкоза, ферритин, холестерин, МК, альбумин</span>
                 </div>
               </div>
@@ -1946,14 +1946,17 @@ export default function App() {
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         {history.slice().reverse().map((h,i) => (
-                          <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 text-xs cursor-pointer hover:border-blue-300 transition relative" onClick={() => setReport(h.text)}>
+                          <button key={i} type="button"
+                            className="bg-white p-3 rounded-xl border border-slate-100 text-xs text-left cursor-pointer hover:border-blue-400 hover:bg-blue-50 active:bg-blue-100 transition relative w-full"
+                            onClick={() => { setReport(h.text); }}>
                             {i===0 && <span className="absolute -left-1 -top-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-white"/>}
                             <div className="flex justify-between text-[9px] text-slate-400 mb-1.5">
                               <span>{new Date(h.date).toLocaleTimeString('ru-RU')}</span>
-                              <span className="font-bold">{h.author}</span>
+                              <span className="font-bold text-blue-600">{h.author}</span>
                             </div>
                             <p className="line-clamp-2 text-slate-600">{h.text.substring(0,100)}…</p>
-                          </div>
+                            <p className="text-[9px] text-blue-500 mt-1.5 font-bold">Нажмите для восстановления</p>
+                          </button>
                         ))}
                       </div>
                     </div>
