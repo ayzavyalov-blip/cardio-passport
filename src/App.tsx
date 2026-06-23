@@ -9,7 +9,7 @@ import {
 // ─── СПРАВОЧНИК ПРАВИЛ ────────────────────────────────────────────────────────
 const RD = {
   version: "23.06.2026",
-  target_age: { min: 22, max: 25 },
+  target_age: { min: 18, max: 45 },
   domains: {
     A: { name: "Семейный анамнез", max: 10 },
     B: { name: "Репродуктивный статус", max: 12 },
@@ -21,7 +21,7 @@ const RD = {
     H: { name: "Лабораторные данные", max: 15 },
   },
   validation: {
-    age:         { min: 22, max: 25,   label: "Возраст (лет)" },
+    age:         { min: 14, max: 55,   label: "Возраст (лет)" },
     height:      { min: 140, max: 220, label: "Рост (см)" },
     weight:      { min: 35, max: 200,  label: "Вес (кг)" },
     waist:       { min: 50, max: 150,  label: "Талия (см)" },
@@ -924,10 +924,10 @@ export default function App() {
     if (!form.patient_name || form.patient_name.trim().length < 2)
       fe.patient_name = 'Обязательное поле';
 
-    // Шаг 1: возраст
+    // Шаг 1: возраст — только проверка на разумный диапазон, не блокирует
     const age = parseNum(form.age);
     if (age === null || age < vr.age.min || age > vr.age.max)
-      fe.age = `Доступно только для ${vr.age.min}–${vr.age.max} лет`;
+      fe.age = `Укажите возраст (${vr.age.min}–${vr.age.max} лет)`;
 
     const am = parseNum(form.active_min);
     if (am !== null && (am < 0 || am > 1500))
@@ -981,7 +981,7 @@ export default function App() {
     });
 
     // Блокировки по шагам
-    const step1Fields = ['patient_name','age','active_min'];
+    const step1Fields = ['patient_name', 'active_min'];
     const step2Fields = ['height','weight','waist','sys1','dia1','sys2','dia2','sys3','dia3','bp_required'];
     const step3Fields = [...LAB_KEYS];
     const errorsForStep = (fields: string[]) => fields.some(k => fe[k]);
@@ -1239,7 +1239,7 @@ export default function App() {
           {isOutlier && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2.5">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5"/>
-              <p className="text-sm text-amber-800"><b>Возраст вне целевой группы.</b> Алгоритм валидирован для женщин 22–25 лет.</p>
+              <p className="text-sm text-amber-800"><b>Примечание:</b> алгоритм разработан для женщин 22–25 лет. Для других возрастных групп результаты носят ориентировочный характер.</p>
             </div>
           )}
         </div>
@@ -1258,7 +1258,7 @@ export default function App() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-4">
                 <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-blue-300 border border-blue-700 bg-blue-900/50">
-                  Для женщин 22–25 лет
+                  Прегравидарный скрининг
                 </span>
                 <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 border border-slate-700 bg-slate-800/50">
                   Версия {RD.version}
@@ -1531,7 +1531,6 @@ export default function App() {
         {valid.currentStepInvalid && (() => {
           const msgs: string[] = [];
           if (valid.fe.patient_name) msgs.push('ФИО пациентки');
-          if (valid.fe.age) msgs.push('возраст вне диапазона 22–25 лет');
           if (valid.fe.height || valid.fe.weight || valid.fe.waist) msgs.push('антропометрия вне допустимых значений');
           if ([1,2,3].some(i => valid.fe[`sys${i}`] || valid.fe[`dia${i}`])) msgs.push('некорректные значения АД');
           if (valid.fe.bp_required) msgs.push('введите хотя бы одно измерение АД');
@@ -1564,7 +1563,6 @@ export default function App() {
                     <label className={lbl}>Возраст (лет) <span className="text-red-500">*</span></label>
                     <NumInput value={form.age} onChange={v=>f({age:v})} className={`${inp} text-center font-black ${errBorder('age')}`}/>
                     <Err k="age"/>
-                    {!valid.fe.age && form.age && <p className="mt-1 text-[10px] text-green-600 font-bold">✓ Возраст в допустимом диапазоне</p>}
                   </div>
                 </div>
               </div>
@@ -1611,7 +1609,15 @@ export default function App() {
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Питание и физическая активность</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={lbl}>Овощи и фрукты (чеклист FIGO)</label><StableSelect value={form.figo_veg} onChange={v=>f({figo_veg:v})} className={sel}><option value="">— Не указано</option><option value="Достаточно">Достаточно (≥ 400 г/сут)</option><option value="Мало">Мало (менее нормы)</option></StableSelect></div>
+                  <div>
+                    <label className={lbl}>Овощи и фрукты</label>
+                    <StableSelect value={form.figo_veg} onChange={v=>f({figo_veg:v})} className={sel}>
+                      <option value="">— Не указано</option>
+                      <option value="Достаточно">Достаточно — ≥ 5 порций/день (1 порция ≈ 80 г)</option>
+                      <option value="Мало">Мало — менее 5 порций/день</option>
+                    </StableSelect>
+                    <p className="text-[10px] text-slate-400 mt-1">5 порций = ~400 г/сут. Порция: 1 фрукт, горсть ягод, 2-3 ст.л. варёных овощей</p>
+                  </div>
                   <div><label className={lbl}>Регулярный фастфуд / ультрапереработанное</label><StableSelect value={form.figo_fastfood} onChange={v=>f({figo_fastfood:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
                   <div><label className={lbl}>Рыба в рационе ≥ 1–2 раз/нед</label><StableSelect value={form.fish} onChange={v=>f({fish:v})} className={sel}><option value="">— Не указано</option><option>Да</option><option>Нет</option></StableSelect></div>
                   <div><label className={lbl}>Ограничительная диета / РПП</label><StableSelect value={form.diet_restrict} onChange={v=>f({diet_restrict:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
