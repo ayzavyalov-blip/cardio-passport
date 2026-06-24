@@ -21,7 +21,7 @@ const RD = {
     H: { name: "Лабораторные данные", max: 15 },
   },
   validation: {
-    age:         { min: 14, max: 55,   label: "Возраст (лет)" },
+    age:         { min: 15, max: 49,   label: "Возраст (лет)" },
     height:      { min: 140, max: 220, label: "Рост (см)" },
     weight:      { min: 35, max: 200,  label: "Вес (кг)" },
     waist:       { min: 50, max: 150,  label: "Талия (см)" },
@@ -52,34 +52,46 @@ const RD = {
   red_flags: [
     { id:"RF-000", cond:(d,m)=> m.avgSys>=180||m.avgDia>=110, level:"Красный", urgency:"Экстренно", title:"Гипертонический криз / АГ 3 ст.", action:"Немедленный вызов скорой помощи или самостоятельное обращение в приёмный покой", desc:"САД ≥ 180 или ДАД ≥ 110 мм рт.ст." },
     { id:"RF-001", cond:(d,m)=> (m.avgSys>=160&&m.avgSys<180)||(m.avgDia>=100&&m.avgDia<110), level:"Красный", urgency:"В день выявления", title:"АГ 2 ст. — срочная оценка", action:"Очная консультация кардиолога в день выявления; не откладывать", desc:"САД 160–179 или ДАД 100–109 мм рт.ст." },
-    { id:"RF-002", cond:(d,m)=> d.coc==='Да'&&(m.avgSys>=140||m.avgDia>=90), level:"Красный", urgency:"В день выявления", title:"КОК при АГ — абсолютное противопоказание", action:"Немедленная отмена КОК, подбор альтернативной контрацепции, консультация гинеколога", desc:"КОК + АД ≥ 140/90 мм рт.ст. (ВОЗ MEC категория 4)" },
-    { id:"RF-003", cond:(d,m)=> d.coc==='Да'&&d.migraine==='С аурой'&&d.smoke==='Да', level:"Красный", urgency:"В день выявления", title:"Тройной сосудистый риск", action:"Немедленная отмена КОК, срочная консультация", desc:"КОК + Мигрень с аурой + Никотин" },
+    { id:"RF-002", cond:(d,m)=> ( d.coc_type==='КОК'||d.coc_type==='Пластырь'||d.coc_type==='Кольцо' )&&(m.avgSys>=140||m.avgDia>=90), level:"Красный", urgency:"В день выявления", title:"КОК при АГ — абсолютное противопоказание", action:"Немедленная отмена КОК, подбор альтернативной контрацепции, консультация гинеколога", desc:"КОК + АД ≥ 140/90 мм рт.ст. (ВОЗ MEC категория 4)" },
+    { id:"RF-003", cond:(d,m)=> ( d.coc_type==='КОК'||d.coc_type==='Пластырь'||d.coc_type==='Кольцо' )&&d.migraine==='С аурой'&&(d.smoke_cig==='Да'||d.smoke_vape==='Да'||d.smoke_hookah==='Да'||d.smoke_snus==='Да'), level:"Красный", urgency:"В день выявления", title:"Тройной сосудистый риск", action:"Немедленная отмена КОК, срочная консультация", desc:"КОК + Мигрень с аурой + Никотин" },
     { id:"RF-005", cond:(d,m)=> (m.avgSys>=140&&m.avgSys<160)||(m.avgDia>=90&&m.avgDia<100), level:"Оранжевый", urgency:"До 2 недель", title:"АГ 1 ст. — приоритетная оценка", action:"Консультация кардиолога до зачатия обязательна; домашний мониторинг АД", desc:"АД 140–159/90–99 мм рт.ст." },
     { id:"RF-006", cond:(d,m)=> Number(d.miscarriages)>=2, level:"Оранжевый", urgency:"До 1 месяца", title:"Привычное невынашивание", action:"Обследование на тромбофилию: АФС, коагулограмма; консультация гематолога и акушера-гинеколога", desc:"≥ 2 самопроизвольных выкидышей в анамнезе" },
     { id:"RF-008", cond:(d,m)=> d.albumin&&Number(d.albumin)<35, level:"Оранжевый", urgency:"До 1 месяца", title:"Выраженный нутритивный дефицит", action:"Коррекция белкового статуса; при альбумине < 30 г/л — консультация гастроэнтеролога/нефролога", desc:"Альбумин < 35 г/л" },
   ],
   critical_combinations: [
-    { id:"CC-001", cond:(d,m)=> d.coc==='Да'&&d.migraine==='С аурой', effect:"+1 ступень риска", title:"КОК + Мигрень с аурой" },
+    { id:"CC-001", cond:(d,m)=> ( d.coc_type==='КОК'||d.coc_type==='Пластырь'||d.coc_type==='Кольцо' )&&d.migraine==='С аурой', effect:"+1 ступень риска", title:"КОК + Мигрень с аурой" },
     { id:"CC-004", cond:(d,m)=> d.spky==='Да'&&Number(d.waist)>=80, effect:"+1 ступень риска", title:"СПКЯ + Абдоминальное ожирение" },
     { id:"CC-011", cond:(d,m)=> Number(d.uric_acid)>360&&m.avgSys>=130, effect:"+1 ступень риска", title:"Гиперурикемия + Повышенное АД" },
-    { id:"CC-012", cond:(d,m)=> d.smoke==='Да'&&m.bmi>=30, effect:"+1 ступень риска", title:"Курение + Ожирение" },
+    { id:"CC-012", cond:(d,m)=> (d.smoke_cig==='Да'||d.smoke_vape==='Да'||d.smoke_hookah==='Да'||d.smoke_snus==='Да')&&m.bmi>=30, effect:"+1 ступень риска", title:"Курение + Ожирение" },
     { id:"CC-013", cond:(d,m)=> d.migraine==='С аурой'&&m.bmi>=30, effect:"+1 ступень риска", title:"Мигрень с аурой + Ожирение" },
     { id:"CC-014", cond:(d,m)=> d.spky==='Да'&&Number(d.uric_acid)>360, effect:"+1 ступень риска", title:"СПКЯ + Гиперурикемия" },
   ],
   recs: [
     {
-      domain:"Питание",
-      problem:"Недостаточное потребление овощей/фруктов или регулярный фастфуд (чеклист FIGO)",
-      cond:(d,m)=>m.nutritionRisk,
+      domain:"Мало овощей и фруктов",
+      problem:"Менее 5 порций овощей и фруктов в день (чеклист FIGO)",
+      cond:(d,m)=>d.figo_veg==='Мало',
       actions:[
-        "Увеличить потребление свежих овощей и фруктов до ≥ 400 г/сут (рекомендация ВОЗ/FIGO): включать в каждый приём пищи",
-        "Ежедневно употреблять источники полноценного белка: птица, рыба, яйца, бобовые, молочные продукты (1,2–1,5 г/кг/сут)",
-        "Исключить ультрапереработанные продукты (колбасы, снеки, сладкие напитки), фастфуд ограничить до < 1 раза/нед",
-        "Добавить продукты, богатые фолатами: шпинат, брокколи, спаржа, чечевица, авокадо",
-        "Повторный нутритивный скрининг по чеклисту FIGO через 3 месяца",
+        "Цель: ≥ 5 порций овощей и фруктов в день (~400 г). 1 порция = 1 фрукт, горсть ягод, 2–3 ст.л. варёных овощей",
+        "Включать овощи в каждый приём пищи: добавить горсть зелени к завтраку, овощной суп или салат к обеду",
+        "Приоритет зелёным листовым овощам, богатым фолатами: шпинат, брокколи, спаржа, руккола",
+        "Повторный нутритивный скрининг через 3 месяца",
       ],
-      pat:"Добавляйте в каждый приём пищи овощи или фрукты, выбирайте белковые блюда (рыба, яйца, творог), ограничьте фастфуд и сладкие напитки.",
+      pat:"Старайтесь есть овощи или фрукты при каждом приёме пищи. Это не обязательно дорого: замороженные овощи так же полезны, как свежие.",
       src:"Чеклист питания FIGO 2023",
+    },
+    {
+      domain:"Регулярный фастфуд",
+      problem:"Регулярное употребление фастфуда и ультрапереработанных продуктов",
+      cond:(d,m)=>d.figo_fastfood==='Да',
+      actions:[
+        "Ограничить фастфуд до < 1 раза/нед; заменить домашней едой из простых продуктов",
+        "Исключить ультрапереработанные продукты: колбасы, снеки, чипсы, сладкие напитки, готовые соусы",
+        "Ограничить добавленный сахар: < 25 г/сут; исключить сладкую газировку и соки промышленного производства",
+        "Ограничить соль до < 5 г/сут: не досаливать пищу, избегать консервов и полуфабрикатов",
+      ],
+      pat:"Постарайтесь готовить дома хотя бы часть блюд. Это не обязательно сложно: яйца, рыба, курица, рис, овощи — быстро и полезнее любого фастфуда.",
+      src:"Чеклист питания FIGO 2023; КР МЗ РФ «Нормальная беременность» 2023",
     },
     {
       domain:"Дотация фолатов",
@@ -125,7 +137,7 @@ const RD = {
     {
       domain:"Прегравидарная подготовка в норме",
       problem:"Основные факторы риска не выявлены",
-      cond:(d,m)=>m.avgSys<130&&m.avgDia<85&&m.bmi>=18.5&&m.bmi<25&&Number(d.waist)<80&&d.smoke==='Нет'&&d.folate==='Да'&&d.figo_veg==='Достаточно'&&d.figo_fastfood==='Нет'&&Number(d.active_min)>=150&&d.migraine!=='С аурой'&&Number(d.miscarriages)<2,
+      cond:(d,m)=>m.avgSys<130&&m.avgDia<85&&m.bmi>=18.5&&m.bmi<25&&Number(d.waist)<80&&(d.smoke_cig!=='Да'&&d.smoke_vape!=='Да'&&d.smoke_hookah!=='Да'&&d.smoke_snus!=='Да')&&d.folate==='Да'&&d.figo_veg==='Достаточно'&&d.figo_fastfood==='Нет'&&Number(d.active_min)>=150&&d.migraine!=='С аурой'&&Number(d.miscarriages)<2,
       actions:[
         "Продолжать приём фолиевой кислоты 400 мкг/сут и йодида калия 200–250 мкг/сут до наступления беременности и в I триместре",
         "Поддерживать физическую активность ≥ 150 мин/нед; предпочтительны умеренные аэробные нагрузки: ходьба, плавание",
@@ -138,24 +150,38 @@ const RD = {
       src:"Протокол МАРС «Прегравидарная подготовка» 2024; КР МЗ РФ «Нормальная беременность» 2023",
     },
     {
-      domain:"Масса тела",
-      problem:"Избыточная масса тела (ИМТ ≥ 25) или абдоминальное ожирение (талия ≥ 80 см)",
-      cond:(d,m)=>m.bmi>=25||Number(d.waist)>=80,
+      domain:"Масса тела — избыточная",
+      problem:"ИМТ 25–29,9 — избыточная масса тела",
+      cond:(d,m)=>m.bmi>=25&&m.bmi<30,
       actions:[
-        "Целевое снижение массы тела на 5-10% от исходной до наступления беременности (уровень доказательности А)",
-        "Дефицит калорий 300-500 ккал/сут: уменьшение порций, отказ от сладких напитков и алкоголя; жёсткие диеты и голодание противопоказаны",
-        "Основа рациона: оливковое масло, рыба 2 раза/нед, бобовые, цельнозерновые, овощи и фрукты",
-        "При СПКЯ с ожирением - исключить инсулинорезистентность (HOMA-IR), консультация эндокринолога",
-        "Контроль объёма талии каждые 4 недели",
-        "При ИМТ > 30: направление к диетологу",
+        "Целевое снижение на 5-7% от исходного веса до наступления беременности",
+        "Дефицит калорий 300-400 ккал/сут: уменьшение порций, отказ от сладких напитков и фастфуда",
+        "Физическая активность ≥ 150 мин/нед: ходьба, плавание, велосипед",
+        "При СПКЯ + ИМТ 25-30: исключить инсулинорезистентность (HOMA-IR), консультация эндокринолога",
+        "Контроль веса и объёма талии каждые 4 недели",
       ],
-      pat:"Не нужны жёсткие диеты — важны постоянные небольшие изменения: меньше сладкого, больше движения. Снижение веса на 5–7% уже значительно улучшит шансы на здоровую беременность.",
-      src:"КР МЗ РФ «Ожирение» 2024",
+      pat:"Небольшое снижение веса — всего 5-7% — значительно снижает риски при беременности. Небольшие изменения в питании и больше движения дают хороший результат.",
+      src:"КР МЗ РФ «Ожирение» 2024; Протокол МАРС 2024",
+    },
+    {
+      domain:"Масса тела — ожирение",
+      problem:"ИМТ ≥ 30 — ожирение",
+      cond:(d,m)=>m.bmi>=30,
+      actions:[
+        "Целевое снижение на 10-15% от исходного веса до наступления беременности (уровень доказательности А)",
+        "Дефицит калорий 500 ккал/сут; минимальная суточная калорийность — не менее 1400 ккал/сут",
+        "Фолиевая кислота: 800 мкг/сут (при ожирении снижена биодоступность)",
+        "Направление к диетологу для индивидуального плана питания",
+        "При ИМТ ≥ 35 + СПКЯ: обязательна консультация эндокринолога (инсулинорезистентность)",
+        "Физическая активность: начать с 15-20 мин/день, постепенно увеличивать до 150 мин/нед",
+      ],
+      pat:"Снижение веса до беременности — важная инвестиция в здоровье вас и малыша. Обратитесь к диетологу — без жёстких диет, с реальным результатом.",
+      src:"КР МЗ РФ «Ожирение» 2024; Протокол МАРС 2024",
     },
     {
       domain:"Отказ от курения",
       problem:"Активное курение / употребление никотинсодержащих изделий",
-      cond:(d,m)=>d.smoke==='Да',
+      cond:(d,m)=>(d.smoke_cig==='Да'||d.smoke_vape==='Да'||d.smoke_hookah==='Да'||d.smoke_snus==='Да'),
       actions:[
         "Полный отказ от всех форм никотина: сигареты, вейпы, электронные сигареты, кальян, снюс — нет безопасных альтернатив",
         "Никотинзаместительная терапия (пластырь, жвачка) допустима при невозможности бросить самостоятельно; после отказа от НЗТ — 3 месяца до планирования зачатия",
@@ -170,7 +196,7 @@ const RD = {
     {
       domain:"КОК и контроль АД",
       problem:"Приём комбинированных оральных контрацептивов без регулярного контроля АД",
-      cond:(d,m)=>d.coc==='Да'&&d.bp_measured==='Нет',
+      cond:(d,m)=>(d.coc_type==='КОК'||d.coc_type==='Пластырь'||d.coc_type==='Кольцо')&&d.bp_measured==='Нет',
       actions:[
         "Немедленно установить базовый уровень АД (трёхкратное измерение в состоянии покоя)",
         "КОК категорически противопоказаны при АД ≥ 140/90 мм рт.ст. — необходима смена метода контрацепции",
@@ -541,7 +567,7 @@ const RD = {
     {
       domain:"Мигрень с аурой",
       problem:"Мигрень с аурой — независимый сосудистый фактор риска",
-      cond:(d,m)=>d.migraine==='С аурой',
+      cond:(d,m)=>d.migraine==='С аурой'||d.migraine==='Возможная',
       actions:[
         "Консультация невролога до зачатия: верификация диагноза, оценка частоты приступов",
         "Мигрень с аурой — независимый риск ишемического инсульта; риск возрастает при КОК и курении",
@@ -568,16 +594,43 @@ const RD = {
     },
     {
       domain:"Дефицит рыбы в рационе",
-      problem:"Рыба реже 1-2 раз/нед — возможный дефицит омега-3 (ДГК)",
+      problem:"Рыба реже 1-2 раз/нед — возможный дефицит ДГК (докозагексаеновой кислоты, омега-3)",
       cond:(d,m)=>d.fish==='Нет',
       actions:[
-        "Жирная рыба (лосось, сардины, скумбрия, форель) ≥ 2 раз/нед — источник ДГК ≥ 200 мг/сут",
-        "При невозможности есть рыбу: омега-3 препараты с содержанием ДГК ≥ 200 мг/сут",
-        "ДГК критична для развития мозга и зрения плода в I-II триместре",
-        "Избегать рыбу с высоким содержанием ртути: тунец (ограничить до 2 пор/нед), акула, меч-рыба, марлин — исключить",
+        "Жирная рыба (лосось, сардины, скумбрия, форель) ≥ 2 раз/нед — основной источник ДГК (докозагексаеновой кислоты, омега-3)",
+        "При невозможности есть рыбу: препараты омега-3 с содержанием ДГК ≥ 200 мг/сут",
+        "ДГК (докозагексаеновая кислота, омега-3) необходима для развития мозга и зрения плода в I–II триместре",
+        "Ограничить рыбу с высоким содержанием ртути: тунец — не более 2 раз/нед; акула, меч-рыба, марлин — исключить",
       ],
-      pat:"Добавьте рыбу в рацион хотя бы 2 раза в неделю — это важно для развития мозга малыша. Если рыбу есть сложно — спросите врача об омега-3 капсулах.",
+      pat:"Добавьте рыбу в рацион хотя бы 2 раза в неделю — это важно для развития мозга малыша. Если рыбу есть сложно, спросите врача об омега-3 капсулах.",
       src:"Чеклист питания FIGO 2023; Протокол МАРС 2024",
+    },
+    {
+      domain:"Дефицит молочных продуктов / кальция",
+      problem:"Недостаточное потребление молочных продуктов или источников кальция",
+      cond:(d,m)=>d.calcium_daily==='Нет',
+      actions:[
+        "Кальций 1000 мг/сут в прегравидарном периоде и 1200 мг/сут во время беременности (из пищи или добавок)",
+        "Основные источники: молоко, кефир, творог (200-600 мг/порция), твёрдый сыр (300 мг/30 г), йогурт",
+        "При непереносимости лактозы или веганстве: обогащённые кальцием растительные напитки (соевое, овсяное молоко), тофу, брокколи, кунжут",
+        "Дефицит кальция в прегравидарном периоде связан с повышенным риском преэклампсии и преждевременных родов",
+        "Добавки кальция при необходимости: карбонат кальция (лучше с едой) или цитрат кальция (можно натощак)",
+      ],
+      pat:"Старайтесь есть молочные продукты каждый день: стакан кефира, кусочек сыра, порция творога — этого достаточно. Если молочное не подходит, спросите врача об альтернативах.",
+      src:"КР МЗ РФ «Нормальная беременность» 2023; Протокол МАРС 2024; FIGO 2024",
+    },
+    {
+      domain:"Возможная мигрень — диагноз не установлен",
+      problem:"Головные боли, характер которых не уточнён",
+      cond:(d,m)=>d.migraine==='Возможная',
+      actions:[
+        "Консультация невролога для верификации диагноза мигрени и определения наличия ауры",
+        "Вести дневник головной боли: дата, продолжительность, характер, сторонность, сопутствующие симптомы (фото/свето-фобия, тошнота, аура)",
+        "До уточнения диагноза — вопрос о безопасности КОК остаётся открытым: при наличии ауры КОК противопоказаны",
+        "Анальгетики при беременности: только парацетамол; НПВП и триптаны — по назначению невролога",
+      ],
+      pat:"У вас есть головные боли, но диагноз пока не установлен. Обратитесь к неврологу — это важно, особенно если планируете беременность или принимаете противозачаточные таблетки.",
+      src:"КР МЗ РФ «Мигрень» 2021",
     },
     {
       domain:"Дефицит массы тела",
@@ -597,7 +650,7 @@ const RD = {
     {
       domain:"Приём КОК без контроля АД",
       problem:"КОК принимаются без регулярного контроля АД",
-      cond:(d,m)=>d.coc==='Да' && d.bp_measured==='Нет',
+      cond:(d,m)=>(d.coc_type==='КОК'||d.coc_type==='Пластырь'||d.coc_type==='Кольцо') && d.bp_measured==='Нет',
       actions:[
         "Измерить АД немедленно: трёхкратно в покое с интервалом 1-2 мин",
         "При АД ≥ 140/90: КОК противопоказаны (ВОЗ MEC кат. 4) — необходима смена метода",
@@ -636,20 +689,24 @@ const RD = {
 const DEFAULT_FORM = {
   patient_name: '',
   age: '',
-  family_cvd: '', family_pe: '',
-  spky: '', coc: '', bp_measured: '', migraine: '',
-  smoke: '', sleep: '', active_min: '',
-  figo_veg: '', figo_fastfood: '', folate: '',
+  consent_personal_data: '',
+  who_fills: '',
+  family_cvd: '', family_pe: '', family_dm: '',
+  spky: '', coc_type: '', bp_measured: '', migraine: '',
+  smoke_cig: '', smoke_vape: '', smoke_hookah: '', smoke_snus: '',
+  sleep: '', active_min: '',
+  figo_veg: '', figo_fastfood: '', folate: '', calcium_daily: '',
+  fish: '', alcohol: '', diet_restrict: '',
   height: '', weight: '', waist: '',
   sys1: '', dia1: '', sys2: '', dia2: '', sys3: '', dia3: '',
   labs_status: 'not_filled',
   cholesterol: '', uric_acid: '', albumin: '',
   tsh: '', glucose: '', ferritin: '',
+  pregnant_ever: '',
   cycle: '', miscarriages: '', dysmenorrhea: '',
   pe_own: '', gdm: '', fgr: '', preterm: '', stillbirth: '',
   chronic_htn: '', dm: '', ckd: '', autoimmune: '', thrombosis: '',
   risky_meds: '',
-  fish: '', calcium_src: '', iron_src: '', alcohol: '', diet_restrict: '',
   consent_local_save: 'Да',
 };
 
@@ -658,13 +715,17 @@ const DEMO_FORM = {
   ...DEFAULT_FORM,
   patient_name: 'Образцова Анна Ивановна',
   age: '22',
-  family_cvd: 'Нет', family_pe: 'Нет',
-  spky: 'Нет', coc: 'Нет', bp_measured: 'Да', migraine: 'Нет',
-  smoke: 'Нет', sleep: '7–9 часов', active_min: '150',
+  consent_personal_data: 'Да',
+  who_fills: 'Врач',
+  family_cvd: 'Нет', family_pe: 'Нет', family_dm: 'Нет',
+  spky: 'Нет', coc_type: 'Нет', bp_measured: 'Да', migraine: 'Нет',
+  smoke_cig: 'Нет', smoke_vape: 'Нет', smoke_hookah: 'Нет', smoke_snus: 'Нет',
+  sleep: '7–9 часов', active_min: '150',
   figo_veg: 'Достаточно', figo_fastfood: 'Нет', folate: 'Да',
-  fish: 'Да', calcium_src: 'Да', iron_src: 'Достаточно', alcohol: 'Нет',
+  fish: 'Да', calcium_daily: 'Да', alcohol: 'Нет',
   height: '165', weight: '65', waist: '75',
   sys1: '118', dia1: '76', sys2: '120', dia2: '78', sys3: '116', dia3: '74',
+  pregnant_ever: 'Нет',
   cycle: 'Регулярный (21–35 дней)', miscarriages: '0', dysmenorrhea: 'Нет',
   pe_own: 'Нет', gdm: 'Нет', fgr: 'Нет', preterm: 'Нет', stillbirth: 'Нет',
   chronic_htn: 'Нет', dm: 'Нет', ckd: 'Нет', autoimmune: 'Нет', thrombosis: 'Нет',
@@ -697,7 +758,7 @@ function getValidBpPairs(form: any) {
     p.sys !== null && p.dia !== null &&
     p.sys >= 70 && p.sys <= 250 &&
     p.dia >= 40 && p.dia <= 150 &&
-    p.dia < p.sys && (p.sys - p.dia) >= 20
+    p.dia < p.sys && (p.sys - p.dia) >= 10
   );
 }
 function avgPairs(pairs: {sys:number,dia:number}[], key: 'sys'|'dia'): number {
@@ -875,9 +936,11 @@ export default function App() {
       const saved = localStorage.getItem('cardio_draft');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Восстанавливаем если есть хоть какие-то данные (ФИО или возраст)
         if (parsed.patient_name || parsed.age) {
           setForm(prev => ({...DEFAULT_FORM, ...parsed}));
+          if (parsed.who_fills === 'Врач' || parsed.who_fills === 'Пациентка') {
+            setRole(parsed.who_fills);
+          }
         }
       }
     } catch {}
@@ -994,7 +1057,7 @@ export default function App() {
     if (form.family_cvd) filled++;
     if (form.spky) filled++;
     if (form.coc) filled++;
-    if (form.smoke) filled++;
+    if (form.smoke_cig||form.smoke_vape||form.smoke_hookah||form.smoke_snus) filled++;
     if (parseNum(form.height)) filled++;
     if (parseNum(form.weight)) filled++;
     if (parseNum(form.waist)) filled++;
@@ -1020,8 +1083,9 @@ export default function App() {
     const add = (d: string, factor: string, pts: number) => { total += pts; dom[d] += pts; breakdown.push({d, factor, pts}); };
 
     // A — Семья
-    if (form.family_cvd === 'Да') add('A','Ранние ССЗ у родственников первой линии', 2);
+    if (form.family_cvd === 'Да') add('A','Ранние ССЗ у родственников первой линии (родители, сибсы)', 2);
     if (form.family_pe  === 'Да') add('A','Преэклампсия в семейном анамнезе', 3);
+    if (form.family_dm  === 'Да') add('A','СД 2 типа у родителей или сибсов', 2);
     if (Number(form.miscarriages) >= 2) add('A','Привычное невынашивание (≥ 2 выкидышей)', 3);
     if (form.pe_own === 'Да')     add('A','Преэклампсия в собственном анамнезе', 4);
     if (form.gdm === 'Да')        add('A','Гестационный диабет в анамнезе', 3);
@@ -1031,23 +1095,28 @@ export default function App() {
 
     // B — Репродукция
     if (form.spky === 'Да') add('B','Синдром поликистозных яичников (СПКЯ)', 3);
-    if (form.coc === 'Да' && form.bp_measured === 'Нет') add('B','Приём КОК без контроля АД', 3);
-    if (form.cycle && form.cycle !== 'Регулярный (21–35 дней)') add('B','Нарушение менструального цикла', 2);
+    const hasCombined = form.coc_type === 'КОК' || form.coc_type === 'Пластырь' || form.coc_type === 'Кольцо';
+    if (hasCombined && form.bp_measured === 'Нет') add('B','Комбинированная гормональная контрацепция без контроля АД', 3);
+    if (form.risky_meds === 'Да') add('B','Лекарства с риском при беременности', 4);
+    if (form.cycle && form.cycle !== 'Регулярный (21–35 дней)' && form.cycle !== 'На фоне препаратов') add('B','Нарушение менструального цикла', 2);
 
     // C — Поведение
-    if (form.smoke === 'Да') add('C','Курение / никотинсодержащие изделия', 3);
+    const anySmoking = form.smoke_cig === 'Да' || form.smoke_vape === 'Да' || form.smoke_hookah === 'Да' || form.smoke_snus === 'Да';
+    if (anySmoking) add('C','Курение / никотинсодержащие изделия', 3);
     if (form.sleep === 'Менее 7 часов') add('C','Дефицит сна (менее 7 часов)', 2);
     if (form.alcohol === 'Да') add('C','Регулярное употребление алкоголя', 3);
 
-    // D — Симптомы
-    if (form.migraine === 'С аурой') add('D','Мигрень с аурой', 3);
+    // D — Симптомы и неврология
+    if (form.migraine === 'С аурой') add('D','Мигрень с аурой (подтверждённая)', 3);
+    // «Возможная мигрень» — не включается в скоринг, только рекомендация к неврологу
 
-    // E — Питание
-    if (form.figo_veg === 'Мало')   add('E','Дефицит овощей и фруктов (чеклист FIGO)', 2);
-    if (form.figo_fastfood === 'Да') add('E','Регулярный фастфуд / ультрапереработанное', 2);
-    if (form.folate === 'Нет')       add('E','Отсутствие дотации фолатов', 3);
-    if (form.fish === 'Нет')         add('E','Нет рыбы в рационе (дефицит ДГК)', 2);
-    if (form.diet_restrict === 'Да') add('E','Ограничительная диета / РПП', 3);
+    // E — Питание и микронутриенты
+    if (form.figo_veg === 'Мало')     add('E','Дефицит овощей и фруктов (< 5 порций/день)', 2);
+    if (form.figo_fastfood === 'Да')  add('E','Регулярный фастфуд / ультрапереработанное', 2);
+    if (form.folate === 'Нет')        add('E','Отсутствие дотации фолатов', 3);
+    if (form.fish === 'Нет')          add('E','Нет рыбы в рационе (дефицит ДГК (докозагексаеновой кислоты, омега-3))', 2);
+    if (form.calcium_daily === 'Нет') add('E','Недостаточное потребление молочных продуктов / кальция', 1);
+    if (form.diet_restrict === 'Да')  add('E','Строгая ограничительная диета / нарушение пищевого поведения', 3);
 
     // F — Активность
     const am = parseNum(form.active_min);
@@ -1148,7 +1217,7 @@ export default function App() {
       specialists.push('невролог (мигрень с аурой / коррекция терапии)');
     if (dom['H'] >= 3 || (parseNum(f.albumin) !== null && parseNum(f.albumin)! < 35) || f.diet_restrict === 'Да')
       specialists.push('диетолог (нутритивный статус / дефициты)');
-    if (f.smoke === 'Да') specialists.push('терапевт (отказ от курения)');
+    if (f.smoke_cig==='Да'||f.smoke_vape==='Да'||f.smoke_hookah==='Да'||f.smoke_snus==='Да') specialists.push('терапевт (отказ от курения)');
     if (f.pe_own === 'Да' || f.preterm === 'Да' || f.fgr === 'Да' || f.stillbirth === 'Да')
       specialists.push('акушер-гинеколог специализированного центра (осложнённый акушерский анамнез)');
 
@@ -1203,15 +1272,15 @@ export default function App() {
   const Header = () => (
     <header className="bg-white border-b px-4 md:px-6 h-14 flex justify-between items-center shrink-0 z-50">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-black text-xs">КП</div>
+        <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-black text-xs">ПС</div>
         <div className="hidden sm:block">
-          <p className="text-sm font-black text-slate-900 leading-none">Кардио-репродуктивный паспорт</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Версия {RD.version}</p>
+          <p className="text-sm font-black text-slate-900 leading-none">Прегравидарный скрининг рисков</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Версия {RD.version} · Завьялова Ю.А., Олина А.А.</p>
         </div>
       </div>
       <div className="flex items-center gap-2 border-l pl-3 md:pl-4">
         {['Врач','Пациентка'].map(r => (
-          <button key={r} onClick={() => { setRole(r); setView('dashboard'); }}
+          <button key={r} onClick={() => { setRole(r); f({who_fills: r}); if (view !== 'results') setView('dashboard'); }}
             className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${role===r ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}>{r}</button>
         ))}
       </div>
@@ -1234,6 +1303,8 @@ export default function App() {
               </div>
               <button onClick={() => { try { localStorage.removeItem('cardio_draft'); } catch {} setForm(DEFAULT_FORM); }}
                 className="text-[10px] font-black text-blue-400 hover:text-red-500 uppercase shrink-0 transition">Очистить</button>
+            <button onClick={() => { setView('wizard'); setStep(1); setTab('summary'); setReport(''); }}
+              className="text-[10px] font-black text-blue-600 hover:text-blue-800 uppercase shrink-0 transition border border-blue-300 px-2 py-1 rounded-lg">Продолжить →</button>
             </div>
           )}
           {isOutlier && (
@@ -1257,18 +1328,16 @@ export default function App() {
             {/* Левая часть */}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-4">
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-blue-300 border border-blue-700 bg-blue-900/50">
-                  Прегравидарный скрининг
-                </span>
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 border border-slate-700 bg-slate-800/50">
+<span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-blue-300 border border-blue-700 bg-blue-900/50">ПГМУ им. Вагнера · Пермь</span>
+                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-300 border border-slate-600 bg-slate-800/50">
                   Версия {RD.version}
                 </span>
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3 tracking-tight">
-                Кардио-репродуктивный<br/>
-                <span className="text-blue-400">паспорт</span>
+                Прегравидарный скрининг<br/>
+                <span className="text-blue-400">рисков здоровья</span>
               </h1>
-              <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-6 max-w-lg">
+              <p className="text-slate-300 text-sm md:text-base leading-relaxed mb-6 max-w-lg">
                 Структурированный прегравидарный скрининг кардио-метаболических, нутритивных и репродуктивных рисков. Инструмент поддержки врачебного решения.
               </p>
               <div className="flex flex-wrap gap-3">
@@ -1279,27 +1348,30 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => { setForm(DEMO_FORM); setView('wizard'); setStep(1); setTab('summary'); setReport(''); }}
-                  className="flex items-center gap-2 border border-slate-600 hover:border-slate-500 text-slate-400 hover:text-white px-5 py-3.5 rounded-xl font-black uppercase text-xs tracking-wide transition">
+                  className="flex items-center gap-2 border border-slate-500 hover:border-slate-400 text-slate-300 hover:text-white px-5 py-3.5 rounded-xl font-black uppercase text-xs tracking-wide transition">
                   <Activity className="w-4 h-4"/> Демо
                 </button>
               </div>
-              <p className="mt-4 text-[10px] text-slate-600 leading-relaxed max-w-lg">
+              <p className="mt-4 text-[10px] text-slate-400 leading-relaxed max-w-lg">
                 ⚕ Инструмент поддержки врачебного решения. Не заменяет очную консультацию специалиста. Лабораторные пороги — прегравидарные целевые значения (МАРС 2024, ВОЗ 2013). Весовые коэффициенты требуют клинической валидации.
+              </p>
+              <p className="mt-2 text-[10px] text-slate-400 leading-relaxed">
+                Авторы: Завьялова Ю.А., Олина А.А.
               </p>
             </div>
 
             {/* Правая часть — иллюстративные метрики */}
             <div className="shrink-0 grid grid-cols-2 gap-3 w-full md:w-auto md:min-w-[220px]">
               {[
-                { label:'Доменов риска', value:'8', sub:'A–H', color:'text-blue-400' },
+                { label:'Доменов риска', value:'8', sub:'A — H', color:'text-blue-400' },
                 { label:'Факторов риска', value:'30+', sub:'оцениваемых', color:'text-teal-400' },
                 { label:'Источников', value:'19', sub:'нормативных', color:'text-purple-400' },
                 { label:'Шагов опроса', value:'3', sub:'анкета', color:'text-amber-400' },
               ].map(m => (
                 <div key={m.label} className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
                   <p className={`text-2xl font-black ${m.color}`}>{m.value}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{m.sub}</p>
-                  <p className="text-[10px] text-slate-400 mt-1 leading-tight">{m.label}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{m.sub}</p>
+                  <p className="text-[10px] text-slate-300 mt-1 leading-tight">{m.label}</p>
                 </div>
               ))}
             </div>
@@ -1549,6 +1621,33 @@ export default function App() {
 
           {step === 1 && (
             <div className="space-y-5">
+              {/* Согласие на обработку персональных данных */}
+              {!form.consent_personal_data && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                  <p className="text-sm font-black text-amber-900 mb-3">Перед началом заполнения</p>
+                  <p className="text-xs text-amber-800 mb-4 leading-relaxed">Анкета содержит персональные данные (ФИО, возраст) и клинические сведения. Данные хранятся только в браузере на этом устройстве и не передаются на сервер.</p>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" className="mt-0.5 w-4 h-4 accent-blue-600 shrink-0"
+                      checked={form.consent_personal_data === 'Да'}
+                      onChange={e=>f({consent_personal_data: e.target.checked ? 'Да' : ''})}/>
+                    <span className="text-xs text-amber-900 font-bold">Я даю согласие на обработку персональных данных в рамках данного медицинского инструмента</span>
+                  </label>
+                </div>
+              )}
+
+              {/* Кто заполняет */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-black text-slate-700">Режим заполнения</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Переключает также кнопки «Врач / Пациентка» в шапке</p>
+                </div>
+                <StableSelect value={form.who_fills || role} onChange={v=>{ f({who_fills:v}); setRole(v); }} className="text-xs font-black border rounded-lg px-3 py-2 outline-none bg-white shrink-0">
+                  <option value="">— Не указано</option>
+                  <option value="Врач">Врач вводит данные</option>
+                  <option value="Пациентка">Пациентка заполняет самостоятельно</option>
+                </StableSelect>
+              </div>
+
               {/* Общие сведения */}
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Общие сведения</h3>
@@ -1570,9 +1669,11 @@ export default function App() {
               {/* Семейный анамнез */}
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Семейный анамнез</h3>
+                <p className="text-[10px] text-slate-400 mb-3">Первая линия родственников: родители, родные братья и сёстры</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={lbl}>ССЗ у родственников первой линии</label><StableSelect value={form.family_cvd} onChange={v=>f({family_cvd:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                  <div><label className={lbl}>Преэклампсия у матери или сестёр</label><StableSelect value={form.family_pe} onChange={v=>f({family_pe:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Ранние ССЗ у родственников первой линии</label><StableSelect value={form.family_cvd} onChange={v=>f({family_cvd:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect><p className="text-[10px] text-slate-400 mt-1">ИБС, инфаркт, инсульт у мужчин &lt; 55 лет, у женщин &lt; 65 лет</p></div>
+                  <div><label className={lbl}>Преэклампсия у матери или сестёр</label><StableSelect value={form.family_pe} onChange={v=>f({family_pe:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option><option value="Не знаю">Нет данных / не знаю</option></StableSelect></div>
+                  <div><label className={lbl}>СД 2 типа у родителей или сибсов</label><StableSelect value={form.family_dm} onChange={v=>f({family_dm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option><option value="Не знаю">Нет данных / не знаю</option></StableSelect></div>
                 </div>
               </div>
 
@@ -1580,14 +1681,27 @@ export default function App() {
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Репродуктивный статус</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={lbl}>Регулярность менструального цикла</label><StableSelect value={form.cycle} onChange={v=>f({cycle:v})} className={sel}><option value="">— Не указано</option><option>Регулярный (21–35 дней)</option><option>Нерегулярный (&gt; 35 или &lt; 21 дня)</option><option>Отсутствует &gt; 3 месяцев</option></StableSelect></div>
-                  <div><label className={lbl}>СПКЯ</label><StableSelect value={form.spky} onChange={v=>f({spky:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                  <div><label className={lbl}>Приём КОК</label><StableSelect value={form.coc} onChange={v=>f({coc:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Регулярность менструального цикла</label><StableSelect value={form.cycle} onChange={v=>f({cycle:v})} className={sel}><option value="">— Не указано</option><option>Регулярный (21–35 дней)</option><option>Нерегулярный (&gt; 35 или &lt; 21 дня)</option><option>Отсутствует &gt; 3 месяцев</option><option value="На фоне препаратов">Отсутствует на фоне гормональных препаратов (норма)</option></StableSelect></div>
+                  <div><label className={lbl}>Синдром поликистозных яичников (СПКЯ)</label><StableSelect value={form.spky} onChange={v=>f({spky:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div>
+                    <label className={lbl}>Гормональная контрацепция</label>
+                    <StableSelect value={form.coc_type} onChange={v=>f({coc_type:v})} className={sel}>
+                      <option value="">— Не указано</option>
+                      <option value="Нет">Нет</option>
+                      <option value="КОК">КОК (таблетки)</option>
+                      <option value="Пластырь">Пластырь (комбинированный)</option>
+                      <option value="Кольцо">Вагинальное кольцо (НоваРинг)</option>
+                      <option value="Мини-пили">Мини-пили (только прогестин)</option>
+                      <option value="Мирена">Спираль Мирена / Джайдесс</option>
+                      <option value="Имплант">Имплант (Импланон)</option>
+                    </StableSelect>
+                    <p className="text-[10px] text-slate-400 mt-1">КОК, пластырь, кольцо — комбинированные. Мини-пили, Мирена, имплант — прогестиновые (другой профиль риска)</p>
+                  </div>
                   <div><label className={lbl}>Выкидыши в анамнезе</label><StableSelect value={form.miscarriages} onChange={v=>f({miscarriages:v})} className={sel}><option value="">— Не указано</option><option value="0">Нет</option><option value="1">1</option><option value="2">≥ 2</option></StableSelect></div>
                   <div><label className={lbl}>Болезненные менструации</label><StableSelect value={form.dysmenorrhea} onChange={v=>f({dysmenorrhea:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Умеренные</option><option>Тяжёлые (требуют анальгетиков)</option></StableSelect></div>
-                  {form.coc === 'Да' && (
+                  {(form.coc_type === 'КОК' || form.coc_type === 'Пластырь' || form.coc_type === 'Кольцо') && (
                     <div className="sm:col-span-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                      <label className={lbl}>АД контролируется на фоне КОК?</label>
+                      <label className={lbl}>АД контролируется на фоне приёма?</label>
                       <StableSelect value={form.bp_measured} onChange={v=>f({bp_measured:v})} className={sel}><option value="">— Не указано</option><option value="Да">Да</option><option value="Нет">Нет</option></StableSelect>
                     </div>
                   )}
@@ -1598,9 +1712,35 @@ export default function App() {
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Симптомы и образ жизни</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={lbl}>Мигрень</label><StableSelect value={form.migraine} onChange={v=>f({migraine:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Без ауры</option><option>С аурой</option></StableSelect></div>
-                  <div><label className={lbl}>Курение (сигареты, вейпы, кальян)</label><StableSelect value={form.smoke} onChange={v=>f({smoke:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                  <div><label className={lbl}>Алкоголь регулярно</label><StableSelect value={form.alcohol} onChange={v=>f({alcohol:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div>
+                    <label className={lbl}>Головная боль / мигрень</label>
+                    <StableSelect value={form.migraine} onChange={v=>f({migraine:v})} className={sel}>
+                      <option value="">— Не указано</option>
+                      <option value="Нет">Нет</option>
+                      <option value="Без ауры">Мигрень без ауры (подтверждена врачом)</option>
+                      <option value="С аурой">Мигрень с аурой (подтверждена врачом)</option>
+                      <option value="Возможная">Головные боли есть, диагноз не установлен</option>
+                    </StableSelect>
+                    {form.migraine === 'Возможная' && <p className="text-[10px] text-amber-600 mt-1 font-bold">→ Рекомендована консультация невролога и дневник головной боли</p>}
+                  </div>
+                  <div>
+                    <label className={lbl}>Курение</label>
+                    <div className="space-y-2 mt-1">
+                      {[['smoke_cig','Сигареты / папиросы'],['smoke_vape','Вейп / электронные сигареты'],['smoke_hookah','Кальян'],['smoke_snus','Снюс / жевательный табак']].map(([key, label]) => (
+                        <label key={key} className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" className="w-4 h-4 accent-blue-600"
+                            checked={(form as any)[key] === 'Да'}
+                            onChange={e=>f({[key]: e.target.checked ? 'Да' : 'Нет'})}/>
+                          <span className="text-xs text-slate-700">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className={lbl}>Алкоголь регулярно</label>
+                    <StableSelect value={form.alcohol} onChange={v=>f({alcohol:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect>
+                    <p className="text-[10px] text-slate-400 mt-1">Регулярно = 1 раз в неделю и чаще</p>
+                  </div>
                   <div><label className={lbl}>Продолжительность ночного сна</label><StableSelect value={form.sleep} onChange={v=>f({sleep:v})} className={sel}><option value="">— Не указано</option><option>7–9 часов</option><option>Менее 7 часов</option><option>Более 9 часов</option></StableSelect></div>
                 </div>
               </div>
@@ -1616,11 +1756,20 @@ export default function App() {
                       <option value="Достаточно">Достаточно — ≥ 5 порций/день (1 порция ≈ 80 г)</option>
                       <option value="Мало">Мало — менее 5 порций/день</option>
                     </StableSelect>
-                    <p className="text-[10px] text-slate-400 mt-1">5 порций = ~400 г/сут. Порция: 1 фрукт, горсть ягод, 2-3 ст.л. варёных овощей</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Порция: 1 фрукт, горсть ягод, 2-3 ст.л. варёных овощей</p>
                   </div>
                   <div><label className={lbl}>Регулярный фастфуд / ультрапереработанное</label><StableSelect value={form.figo_fastfood} onChange={v=>f({figo_fastfood:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div>
+                    <label className={lbl}>Молочные продукты / кальций</label>
+                    <StableSelect value={form.calcium_daily} onChange={v=>f({calcium_daily:v})} className={sel}><option value="">— Не указано</option><option value="Да">Да, ежедневно</option><option value="Нет">Нет / редко</option></StableSelect>
+                    <p className="text-[10px] text-slate-400 mt-1">Творог, кефир, сыр, молоко, йогурт или обогащённые растительные напитки</p>
+                  </div>
                   <div><label className={lbl}>Рыба в рационе ≥ 1–2 раз/нед</label><StableSelect value={form.fish} onChange={v=>f({fish:v})} className={sel}><option value="">— Не указано</option><option>Да</option><option>Нет</option></StableSelect></div>
-                  <div><label className={lbl}>Ограничительная диета / РПП</label><StableSelect value={form.diet_restrict} onChange={v=>f({diet_restrict:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div>
+                    <label className={lbl}>Строгая диета или нарушение питания</label>
+                    <StableSelect value={form.diet_restrict} onChange={v=>f({diet_restrict:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect>
+                    <p className="text-[10px] text-slate-400 mt-1">Строгое исключение групп продуктов, голодание, переедание с очищением</p>
+                  </div>
                   <div><label className={lbl}>Фолиевая кислота</label><StableSelect value={form.folate} onChange={v=>f({folate:v})} className={sel}><option value="">— Не указано</option><option value="Да">Да, принимаю</option><option value="Нет">Нет</option></StableSelect></div>
                   <div>
                     <label className={lbl}>Физическая активность (мин/нед)</label>
@@ -1630,19 +1779,28 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Акушерский анамнез — всегда открыт */}
+              {/* Акушерский анамнез — с фильтром */}
               <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200">
                 <div className="flex items-center justify-between border-b pb-3 mb-4">
                   <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest">Акушерский анамнез</h3>
-                  <span className="text-[10px] text-slate-400">При наличии прошлых беременностей</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={lbl}>Преэклампсия у самой пациентки</label><StableSelect value={form.pe_own} onChange={v=>f({pe_own:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                  <div><label className={lbl}>Гестационный диабет</label><StableSelect value={form.gdm} onChange={v=>f({gdm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                  <div><label className={lbl}>Задержка роста плода</label><StableSelect value={form.fgr} onChange={v=>f({fgr:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                  <div><label className={lbl}>Преждевременные роды</label><StableSelect value={form.preterm} onChange={v=>f({preterm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
-                  <div><label className={lbl}>Антенатальная гибель плода</label><StableSelect value={form.stillbirth} onChange={v=>f({stillbirth:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                <div className="mb-4">
+                  <label className={lbl}>Были ли беременности?</label>
+                  <StableSelect value={form.pregnant_ever} onChange={v=>f({pregnant_ever:v})} className={`${sel} max-w-xs`}>
+                    <option value="">— Не указано</option>
+                    <option value="Нет">Нет</option>
+                    <option value="Да">Да</option>
+                  </StableSelect>
                 </div>
+                {form.pregnant_ever === 'Да' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label className={lbl}>Преэклампсия у самой пациентки</label><StableSelect value={form.pe_own} onChange={v=>f({pe_own:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Гестационный диабет</label><StableSelect value={form.gdm} onChange={v=>f({gdm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Задержка роста плода</label><StableSelect value={form.fgr} onChange={v=>f({fgr:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Преждевременные роды</label><StableSelect value={form.preterm} onChange={v=>f({preterm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                    <div><label className={lbl}>Антенатальная гибель плода</label><StableSelect value={form.stillbirth} onChange={v=>f({stillbirth:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  </div>
+                )}
               </div>
 
               {/* Соматический анамнез — всегда открыт */}
@@ -1880,106 +2038,152 @@ export default function App() {
 
     // Режим пациентки
     if (role === 'Пациентка') {
+      // Цвета по категории
+      const catColors = {
+        'Низкий':     { bg:'bg-green-50',  border:'border-green-300', dot:'bg-green-500',  text:'text-green-700',  emoji:'🟢' },
+        'Умеренный':  { bg:'bg-amber-50',  border:'border-amber-300', dot:'bg-amber-500',  text:'text-amber-700',  emoji:'🟡' },
+        'Повышенный': { bg:'bg-orange-50', border:'border-orange-300',dot:'bg-orange-500', text:'text-orange-700', emoji:'🟠' },
+        'Высокий':    { bg:'bg-red-50',    border:'border-red-300',   dot:'bg-red-500',    text:'text-red-700',    emoji:'🔴' },
+      };
+      const cc = catColors[scoring.riskCat] || catColors['Умеренный'];
+
+      // Простые пояснения категорий
+      const catExplain = {
+        'Низкий': {
+          title: 'Всё в порядке',
+          text: 'По результатам анкеты серьёзных факторов риска не обнаружено. Это хорошая новость! Вам нужна обычная подготовка к беременности — плановый визит к гинекологу, фолиевая кислота и здоровый образ жизни.',
+        },
+        'Умеренный': {
+          title: 'Есть несколько моментов, которые стоит обсудить с врачом',
+          text: 'Мы нашли факторы, которые желательно скорректировать до беременности. Ничего критичного — но лучше разобраться заранее. Покажите этот результат гинекологу на ближайшем приёме.',
+        },
+        'Повышенный': {
+          title: 'Нужна консультация врача до беременности',
+          text: 'Обнаружены факторы, которые важно разобрать с врачом до того, как планировать беременность. Это не значит, что беременность невозможна — просто нужна дополнительная подготовка.',
+        },
+        'Высокий': {
+          title: 'Пожалуйста, обратитесь к врачу в ближайшее время',
+          text: 'Результаты говорят о том, что перед беременностью важно пройти обследование и получить консультацию специалистов. Не откладывайте — чем раньше начнёте подготовку, тем лучше.',
+        },
+      };
+      const catInfo = catExplain[scoring.riskCat] || catExplain['Умеренный'];
+
       return (
-        <div className="overflow-y-auto h-full">
-          <div className="max-w-2xl mx-auto p-4 md:p-10 space-y-6" id="print-area">
+        <div className="overflow-y-auto h-full bg-slate-50">
+          <div className="max-w-xl mx-auto p-4 space-y-4" id="print-area">
+
             {/* Шапка */}
-            <div className={`p-6 md:p-10 rounded-2xl border-2 ${rc.border} ${rc.bg} text-center`}>
-              <div className={`w-16 h-16 rounded-full ${rc.dot} flex items-center justify-center mx-auto mb-4`}>
-                <HeartPulse className="w-8 h-8 text-white"/>
-              </div>
-              {form.patient_name && <p className="text-lg font-black text-slate-800 mb-1">{form.patient_name}</p>}
-              <p className="text-sm text-slate-500 mb-1">Оценка прегравидарного риска</p>
-              <p className={`text-2xl font-black ${rc.text} uppercase mt-2`}>{scoring.riskCat} риск</p>
-              {/* Человечное объяснение категории */}
-              <p className="text-xs text-slate-600 mt-3 max-w-sm mx-auto leading-relaxed">
-                {scoring.riskCat === 'Низкий' &&
-                  'Ваш профиль в целом благоприятный. Стандартная прегравидарная подготовка под наблюдением врача.'}
-                {scoring.riskCat === 'Умеренный' &&
-                  'Выявлены факторы, которые стоит скорректировать до беременности. Плановая консультация врача и коррекция образа жизни.'}
-                {scoring.riskCat === 'Повышенный' &&
-                  'Необходима дополнительная оценка и коррекция нескольких факторов. Рекомендуется расширенное обследование до зачатия.'}
-                {scoring.riskCat === 'Высокий' && (() => {
-                  const specs: string[] = ['акушер-гинеколог'];
-                  if (metrics.avgSys >= 130 || scoring.dom['G'] >= 3) specs.push('кардиолог');
-                  if (form.dm==='Да'||form.gdm==='Да'||form.spky==='Да') specs.push('эндокринолог');
-                  if (form.ckd==='Да') specs.push('нефролог');
-                  if (form.autoimmune==='Да') specs.push('ревматолог');
-                  if (form.thrombosis==='Да'||Number(form.miscarriages)>=2) specs.push('гематолог');
-                  if (form.migraine==='С аурой') specs.push('невролог');
-                  return `Обнаружены серьёзные факторы риска. До планирования беременности необходимы консультации: ${specs.join(', ')}.`;
-                })()}
-              </p>
-              <p className="text-[10px] text-slate-400 mt-2">Это не диагноз — результат нужно обсудить с врачом</p>
-            </div>
-
-            {/* Ваши показатели */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="font-black text-slate-800 text-sm mb-4">Ваши основные показатели</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {metrics.bmi > 0 && (
-                  <div className={`p-4 rounded-xl border text-center ${metrics.bmi < 18.5 ? 'bg-blue-50 border-blue-200' : metrics.bmi < 25 ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
-                    <p className="text-2xl font-black text-slate-900">{metrics.bmi}</p>
-                    <p className="text-xs font-bold text-slate-600 mt-1">ИМТ</p>
-                    <p className="text-[10px] text-slate-500">норма 18,5–24,9</p>
-                    <p className={`text-[10px] font-black mt-1 ${metrics.bmi < 18.5 ? 'text-blue-600' : metrics.bmi < 25 ? 'text-green-600' : 'text-amber-600'}`}>
-                      {metrics.bmi < 18.5 ? '↓ Ниже нормы' : metrics.bmi < 25 ? '✓ Норма' : metrics.bmi < 30 ? '↑ Выше нормы' : '↑↑ Ожирение'}
-                    </p>
-                  </div>
-                )}
-                {metrics.avgSys > 0 && (
-                  <div className={`p-4 rounded-xl border text-center ${metrics.avgSys >= 140 ? 'bg-red-50 border-red-200' : metrics.avgSys >= 130 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
-                    <p className="text-2xl font-black text-slate-900">{metrics.avgSys}/{metrics.avgDia}</p>
-                    <p className="text-xs font-bold text-slate-600 mt-1">АД мм рт.ст.</p>
-                    <p className="text-[10px] text-slate-500">норма &lt; 120/70 (ESC 2024)</p>
-                    <p className={`text-[10px] font-black mt-1 ${metrics.avgSys >= 140 ? 'text-red-600' : metrics.avgSys >= 130 ? 'text-amber-600' : metrics.avgSys >= 120 ? 'text-yellow-600' : 'text-green-600'}`}>
-                      {metrics.avgSys >= 140 ? '↑ Повышено' : metrics.avgSys >= 130 ? '↑ Высокое норм.' : metrics.avgSys >= 120 ? '↑ Повышенное (ESC)' : '✓ Норма'}
-                    </p>
-                  </div>
-                )}
-                {Number(form.waist) > 0 && (
-                  <div className={`p-4 rounded-xl border text-center ${Number(form.waist) >= 80 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
-                    <p className="text-2xl font-black text-slate-900">{form.waist} см</p>
-                    <p className="text-xs font-bold text-slate-600 mt-1">Талия</p>
-                    <p className="text-[10px] text-slate-500">норма &lt; 80 см</p>
-                    <p className={`text-[10px] font-black mt-1 ${Number(form.waist) >= 80 ? 'text-amber-600' : 'text-green-600'}`}>
-                      {Number(form.waist) >= 80 ? '↑ Выше нормы' : '✓ Норма'}
-                    </p>
-                  </div>
-                )}
+            <div className={`rounded-2xl border-2 ${cc.border} ${cc.bg} p-6 text-center`}>
+              <p className="text-4xl mb-2">{cc.emoji}</p>
+              {form.patient_name && <p className="font-black text-slate-800 text-base mb-1">{form.patient_name}</p>}
+              <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-3">Результат прегравидарной оценки</p>
+              <p className={`text-2xl font-black ${cc.text} mb-3`}>{catInfo.title}</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{catInfo.text}</p>
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <p className="text-[10px] text-slate-400 italic">Это не диагноз. Результат подготовлен как вспомогательная информация для разговора с врачом.</p>
               </div>
             </div>
 
-            {/* Рекомендации */}
-            {scoring.activeRecs.length > 0 && (
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-black text-slate-800 text-sm mb-4 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-500"/> Что требует внимания
-                </h3>
-                <ul className="space-y-4">
-                  {scoring.activeRecs.map((r,i) => (
-                    <li key={i} className="flex gap-3 p-3 bg-slate-50 rounded-xl">
-                      <span className={`w-2 h-2 rounded-full ${rc.dot} mt-1.5 shrink-0`}/>
-                      <span className="text-sm text-slate-700 leading-relaxed">{r.pat}</span>
-                    </li>
-                  ))}
-                </ul>
+            {/* Ваши показатели — только если есть данные */}
+            {(metrics.bmi > 0 || metrics.avgSys > 0 || Number(form.waist) > 0) && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                <p className="font-black text-slate-800 text-sm mb-4">Ваши измерения</p>
+                <div className="space-y-3">
+                  {metrics.bmi > 0 && (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+                      <div>
+                        <p className="font-bold text-slate-700 text-sm">Индекс массы тела (ИМТ)</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Нормальный вес: ИМТ от 18,5 до 24,9</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-black text-slate-900">{metrics.bmi}</p>
+                        <p className={`text-[10px] font-black ${metrics.bmi < 18.5 ? 'text-blue-600' : metrics.bmi < 25 ? 'text-green-600' : metrics.bmi < 30 ? 'text-amber-600' : 'text-red-600'}`}>
+                          {metrics.bmi < 18.5 ? 'Ниже нормы' : metrics.bmi < 25 ? '✓ В норме' : metrics.bmi < 30 ? 'Чуть выше нормы' : 'Значительно выше нормы'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {metrics.avgSys > 0 && (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+                      <div>
+                        <p className="font-bold text-slate-700 text-sm">Артериальное давление</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Хорошее давление: ниже 120/70</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-black text-slate-900">{metrics.avgSys}/{metrics.avgDia}</p>
+                        <p className={`text-[10px] font-black ${metrics.avgSys >= 140 ? 'text-red-600' : metrics.avgSys >= 130 ? 'text-amber-600' : 'text-green-600'}`}>
+                          {metrics.avgSys >= 140 ? 'Повышено — нужна консультация' : metrics.avgSys >= 130 ? 'Немного повышено' : '✓ В норме'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {Number(form.waist) > 0 && (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+                      <div>
+                        <p className="font-bold text-slate-700 text-sm">Объём талии</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Норма для женщины: до 80 см</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-black text-slate-900">{form.waist} см</p>
+                        <p className={`text-[10px] font-black ${Number(form.waist) >= 88 ? 'text-red-600' : Number(form.waist) >= 80 ? 'text-amber-600' : 'text-green-600'}`}>
+                          {Number(form.waist) >= 88 ? 'Значительно выше нормы' : Number(form.waist) >= 80 ? 'Чуть выше нормы' : '✓ В норме'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Дальнейшие шаги */}
-            <div className="bg-blue-600 text-white p-6 rounded-2xl no-print">
-              <h3 className="font-black uppercase text-xs mb-4 text-blue-100 flex items-center gap-2">
-                <Clock className="w-4 h-4"/> Дальнейшие шаги
-              </h3>
-              <p className="text-sm font-medium leading-relaxed">Покажите это заключение вашему лечащему врачу — он составит индивидуальный план подготовки к беременности. Повторите оценку через 1–3 месяца после начала коррекции.</p>
+            {/* Что стоит сделать */}
+            {scoring.activeRecs.length > 0 && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                <p className="font-black text-slate-800 text-sm mb-1">На что обратить внимание</p>
+                <p className="text-[11px] text-slate-400 mb-4">Обсудите эти пункты с врачом на ближайшем приёме</p>
+                <div className="space-y-3">
+                  {scoring.activeRecs.map((r, i) => (
+                    <div key={i} className="flex gap-3 p-3 bg-slate-50 rounded-xl">
+                      <span className={`w-2 h-2 rounded-full ${cc.dot} mt-2 shrink-0`}/>
+                      <p className="text-sm text-slate-700 leading-relaxed">{r.pat}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Тревожные признаки — только красные флаги, упрощённо */}
+            {scoring.activeRF.filter(rf => rf.level === 'Красный').length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+                <p className="font-black text-red-800 text-sm mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4"/> Важно — не откладывайте
+                </p>
+                <div className="space-y-2">
+                  {scoring.activeRF.filter(rf => rf.level === 'Красный').map(rf => (
+                    <div key={rf.id} className="p-3 bg-white rounded-xl border border-red-100">
+                      <p className="text-sm font-bold text-red-800">{rf.title}</p>
+                      <p className="text-xs text-red-600 mt-1">{rf.action}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Что делать дальше */}
+            <div className="bg-blue-600 text-white p-5 rounded-2xl no-print">
+              <p className="font-black text-sm mb-2 text-white">Что делать дальше?</p>
+              <ol className="space-y-2 text-sm leading-relaxed text-blue-50">
+                <li className="flex gap-2"><span className="font-black shrink-0">1.</span> Распечатайте или сохраните этот результат</li>
+                <li className="flex gap-2"><span className="font-black shrink-0">2.</span> Покажите его своему гинекологу на ближайшем приёме</li>
+                <li className="flex gap-2"><span className="font-black shrink-0">3.</span> Вместе с врачом составьте план подготовки к беременности</li>
+              </ol>
             </div>
 
-            {/* Печать */}
+            {/* Кнопка */}
             <button onClick={() => window.print()}
-              className="w-full py-4 bg-slate-800 text-white rounded-2xl text-xs font-black uppercase flex items-center justify-center gap-3 hover:bg-slate-700 transition no-print">
+              className="w-full py-4 bg-slate-800 text-white rounded-2xl text-sm font-black flex items-center justify-center gap-2 hover:bg-slate-700 transition no-print">
               <FileDown className="w-4 h-4"/> Сохранить / Распечатать
             </button>
+
           </div>
         </div>
       );
@@ -2094,7 +2298,7 @@ export default function App() {
                       {scoring.activeCC.map(cc => (
                         <div key={cc.id} className="flex flex-wrap justify-between items-center p-4 bg-white/10 rounded-xl gap-2">
                           <span className="font-bold text-sm">{cc.title}</span>
-                          <span className="text-[10px] font-black bg-blue-600 px-3 py-1.5 rounded-lg uppercase">{cc.effect}</span>
+                          <span className="text-[10px] font-black bg-blue-600 text-white px-3 py-1.5 rounded-lg uppercase">{cc.effect}</span>
                         </div>
                       ))}
                     </div>
