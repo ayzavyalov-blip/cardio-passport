@@ -1204,7 +1204,14 @@ export default function App() {
     t += `${scoring.riskCat.toUpperCase()} (интегральный балл ${scoring.total}).\n\n`;
 
     // ── Специалисты — на основе выявленных факторов ──────────────────────────
-    const specialists: string[] = ['акушер-гинеколог (плановая прегравидарная консультация)'];
+    const specialists: string[] = [];
+    // Акушер-гинеколог: обычный или специализированный центр
+    const hasComplexObs = f.pe_own === 'Да' || f.preterm === 'Да' || f.fgr === 'Да' || f.stillbirth === 'Да';
+    if (hasComplexObs) {
+      specialists.push('акушер-гинеколог специализированного центра (осложнённый акушерский анамнез)');
+    } else {
+      specialists.push('акушер-гинеколог (прегравидарная консультация)');
+    }
     const dom = scoring.dom;
     const rf = scoring.activeRF;
     const f = form;
@@ -1220,8 +1227,6 @@ export default function App() {
     if (dom['H'] >= 3 || (parseNum(f.albumin) !== null && parseNum(f.albumin)! < 35) || f.diet_restrict === 'Да')
       specialists.push('диетолог (нутритивный статус / дефициты)');
     if (f.smoke_cig==='Да'||f.smoke_vape==='Да'||f.smoke_hookah==='Да'||f.smoke_snus==='Да') specialists.push('терапевт (отказ от курения)');
-    if (f.pe_own === 'Да' || f.preterm === 'Да' || f.fgr === 'Да' || f.stillbirth === 'Да')
-      specialists.push('акушер-гинеколог специализированного центра (осложнённый акушерский анамнез)');
 
     const tacticsMap: Record<string,string> = {
       'Низкий': 'Рекомендовано плановое наблюдение акушера-гинеколога. Стандартный объём прегравидарной подготовки.',
@@ -2136,19 +2141,50 @@ export default function App() {
               </div>
             )}
 
-            {/* Что стоит сделать */}
+            {/* Что стоит сделать — таблица */}
             {scoring.activeRecs.length > 0 && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <p className="font-black text-slate-800 text-sm mb-1">На что обратить внимание</p>
-                <p className="text-[11px] text-slate-400 mb-4">Обсудите эти пункты с врачом на ближайшем приёме</p>
-                <div className="space-y-3">
-                  {scoring.activeRecs.map((r, i) => (
-                    <div key={i} className="flex gap-3 p-3 bg-slate-50 rounded-xl">
-                      <span className={`w-2 h-2 rounded-full ${cc.dot} mt-2 shrink-0`}/>
-                      <p className="text-sm text-slate-700 leading-relaxed">{r.pat}</p>
-                    </div>
-                  ))}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="px-5 pt-5 pb-3">
+                  <p className="font-black text-slate-800 text-sm">На что обратить внимание</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Обсудите с врачом на ближайшем приёме</p>
                 </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-t border-slate-100 bg-slate-50">
+                      <th className="text-left text-[10px] font-black text-slate-400 uppercase px-5 py-2.5 w-1/2">Что настораживает</th>
+                      <th className="text-left text-[10px] font-black text-slate-400 uppercase px-5 py-2.5 w-1/2">Что делать</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {scoring.activeRecs.map((r, i) => {
+                      // Decode abbreviations in pat text
+                      const decoded = r.pat
+                        .replace(/ГДМ/g, 'гестационный диабет (диабет при беременности)')
+                        .replace(/ПЭ/g, 'преэклампсия (высокое давление при беременности)')
+                        .replace(/СПКЯ/g, 'синдром поликистозных яичников')
+                        .replace(/ИМТ/g, 'индекс массы тела')
+                        .replace(/АД/g, 'артериальное давление')
+                        .replace(/ХБП/g, 'хроническая болезнь почек')
+                        .replace(/СКВ/g, 'системная красная волчанка')
+                        .replace(/АФС/g, 'антифосфолипидный синдром')
+                        .replace(/НМГ/g, 'низкомолекулярный гепарин')
+                        .replace(/НОАК/g, 'антикоагулянтные препараты')
+                        .replace(/НПВП/g, 'обезболивающие (кроме парацетамола)')
+                        .replace(/ДГК/g, 'омега-3 (докозагексаеновая кислота)')
+                        .replace(/МК/g, 'мочевая кислота');
+                      // Split into problem / action at a verb
+                      const sentences = decoded.split(/(?<=[.!])\s+/);
+                      const problem = sentences[0] || decoded;
+                      const action = sentences.slice(1).join(' ') || 'Обсудите с врачом';
+                      return (
+                        <tr key={i} className="align-top hover:bg-slate-50 transition">
+                          <td className="px-5 py-3 text-slate-700 leading-snug">{problem}</td>
+                          <td className="px-5 py-3 text-slate-600 leading-snug">{action}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
 
@@ -2179,11 +2215,21 @@ export default function App() {
               </ol>
             </div>
 
-            {/* Кнопка */}
-            <button onClick={() => window.print()}
-              className="w-full py-4 bg-slate-800 text-white rounded-2xl text-sm font-black flex items-center justify-center gap-2 hover:bg-slate-700 transition no-print">
-              <FileDown className="w-4 h-4"/> Сохранить / Распечатать
-            </button>
+            {/* Кнопки */}
+            <div className="flex gap-3 no-print">
+              <button onClick={() => {
+                try { localStorage.removeItem('cardio_draft'); } catch {}
+                setForm(DEFAULT_FORM); setReport(''); setHistory([]);
+                setView('wizard'); setStep(1); setTab('summary');
+              }}
+                className="flex-1 py-3.5 bg-blue-600 text-white rounded-2xl text-sm font-black flex items-center justify-center gap-2 hover:bg-blue-700 transition">
+                + Новый расчёт
+              </button>
+              <button onClick={() => window.print()}
+                className="flex-1 py-3.5 bg-slate-800 text-white rounded-2xl text-sm font-black flex items-center justify-center gap-2 hover:bg-slate-700 transition">
+                <FileDown className="w-4 h-4"/> Сохранить
+              </button>
+            </div>
 
           </div>
         </div>
