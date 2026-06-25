@@ -187,139 +187,6 @@ interface RiskColorSet {
   dot: string;
 }
 
-type RecommendationPriority = 'critical' | 'high' | 'medium' | 'routine';
-
-interface RankedRecommendation extends RecommendationRule {
-  priority: RecommendationPriority;
-  priorityLabel: string;
-  priorityOrder: number;
-}
-
-interface RecommendationPriorityStyle {
-  card: string;
-  header: string;
-  badge: string;
-  arrow: string;
-  patientRow: string;
-}
-
-const RECOMMENDATION_PRIORITY_META: Record<RecommendationPriority, {
-  label: string;
-  order: number;
-}> = {
-  critical: { label: 'Первоочередно', order: 0 },
-  high: { label: 'Высокий приоритет', order: 1 },
-  medium: { label: 'Плановая коррекция', order: 2 },
-  routine: { label: 'Поддерживающая рекомендация', order: 3 },
-};
-
-const RECOMMENDATION_PRIORITY_STYLES: Record<RecommendationPriority, RecommendationPriorityStyle> = {
-  critical: {
-    card: 'border-red-300 bg-red-50',
-    header: 'bg-red-100/80 border-red-200',
-    badge: 'bg-red-600 text-white',
-    arrow: 'text-red-600',
-    patientRow: 'bg-red-50 hover:bg-red-100/70',
-  },
-  high: {
-    card: 'border-orange-300 bg-orange-50',
-    header: 'bg-orange-100/80 border-orange-200',
-    badge: 'bg-orange-600 text-white',
-    arrow: 'text-orange-600',
-    patientRow: 'bg-orange-50 hover:bg-orange-100/70',
-  },
-  medium: {
-    card: 'border-blue-200 bg-blue-50/40',
-    header: 'bg-blue-50 border-blue-100',
-    badge: 'bg-blue-100 text-blue-700',
-    arrow: 'text-blue-600',
-    patientRow: 'bg-blue-50/40 hover:bg-blue-50',
-  },
-  routine: {
-    card: 'border-slate-200 bg-white',
-    header: 'bg-slate-50 border-slate-100',
-    badge: 'bg-slate-100 text-slate-600',
-    arrow: 'text-slate-500',
-    patientRow: 'bg-white hover:bg-slate-50',
-  },
-};
-
-/*
- * Приоритет используется только для порядка и визуального выделения рекомендаций.
- * Он не меняет интегральный балл и не является отдельной клинической шкалой.
- */
-const BASE_RECOMMENDATION_PRIORITY: Record<string, RecommendationPriority> = {
-  'Контроль АД': 'high',
-  'КОК и контроль АД': 'high',
-  'Приём КОК без контроля АД': 'high',
-  'Сахарный диабет': 'high',
-  'Хроническая артериальная гипертензия': 'high',
-  'Хроническая болезнь почек': 'high',
-  'Аутоиммунные заболевания': 'high',
-  'Тромбоз в анамнезе': 'high',
-  'Лекарства с риском при беременности': 'high',
-  'Привычное невынашивание': 'high',
-  'Преэклампсия в собственном анамнезе': 'high',
-  'Антенатальная гибель плода в анамнезе': 'high',
-  'Нарушение гликемии': 'high',
-  'Гипоальбуминемия': 'high',
-  'Отклонение ТТГ': 'high',
-  'Мигрень с аурой': 'high',
-  'Ограничительная диета / РПП': 'high',
-  'Дотация фолатов': 'high',
-  'Отказ от курения': 'high',
-  'Алкоголь': 'high',
-  'Масса тела — ожирение': 'high',
-  'Дефицит массы тела': 'high',
-
-  'Гестационный диабет в анамнезе': 'medium',
-  'СПКЯ': 'medium',
-  'Нарушение менструального цикла': 'medium',
-  'Преэклампсия в семейном анамнезе': 'medium',
-  'Преждевременные роды в анамнезе': 'medium',
-  'Задержка роста плода в анамнезе': 'medium',
-  'ССЗ в семейном анамнезе': 'medium',
-  'Гиперхолестеринемия': 'medium',
-  'Гиперурикемия': 'medium',
-  'Дефицит железа': 'medium',
-  'Масса тела — избыточная': 'medium',
-  'Возможная мигрень — диагноз не установлен': 'medium',
-
-  'Мало овощей и фруктов': 'routine',
-  'Регулярный фастфуд': 'routine',
-  'Физическая активность': 'routine',
-  'Субоптимальный ферритин': 'routine',
-  'Дефицит сна': 'routine',
-  'Дефицит рыбы в рационе': 'routine',
-  'Дефицит молочных продуктов / кальция': 'routine',
-  'Прегравидарная подготовка в норме': 'routine',
-};
-
-const RED_FLAG_RECOMMENDATION_DOMAINS: Record<string, string[]> = {
-  'RF-000': ['Контроль АД', 'Хроническая артериальная гипертензия'],
-  'RF-001': ['Контроль АД', 'Хроническая артериальная гипертензия'],
-  'RF-002': ['КОК и контроль АД', 'Приём КОК без контроля АД'],
-  'RF-003': ['КОК и контроль АД', 'Приём КОК без контроля АД', 'Мигрень с аурой', 'Отказ от курения'],
-  'RF-005': ['Контроль АД', 'Хроническая артериальная гипертензия'],
-  'RF-006': ['Привычное невынашивание'],
-  'RF-008': ['Гипоальбуминемия'],
-};
-
-const decodeMedicalText = (value: string): string => value
-  .replace(/ГДМ/g, 'гестационный диабет (диабет при беременности)')
-  .replace(/ПЭ/g, 'преэклампсия (высокое давление при беременности)')
-  .replace(/СПКЯ/g, 'синдром поликистозных яичников')
-  .replace(/ИМТ/g, 'индекс массы тела')
-  .replace(/АД/g, 'артериальное давление')
-  .replace(/ХБП/g, 'хроническая болезнь почек')
-  .replace(/СКВ/g, 'системная красная волчанка')
-  .replace(/АФС/g, 'антифосфолипидный синдром')
-  .replace(/НМГ/g, 'низкомолекулярный гепарин')
-  .replace(/НОАК/g, 'антикоагулянтные препараты')
-  .replace(/НПВП/g, 'обезболивающие (кроме парацетамола)')
-  .replace(/ДГК/g, 'омега-3 (докозагексаеновая кислота)')
-  .replace(/МК/g, 'мочевая кислота');
-
 // ─── СПРАВОЧНИК ПРАВИЛ ────────────────────────────────────────────────────────
 const RD: RulesDictionary = {
   version: "23.06.2026",
@@ -1549,39 +1416,6 @@ export default function App() {
     return { total, breakdown, dom, top5, activeRF, activeCC, activeRecs, riskCat };
   }, [form, metrics]);
 
-  // Рекомендации сортируются независимо от их порядка в справочнике.
-  // Красный тревожный признак поднимает связанную рекомендацию в группу
-  // «Первоочередно», оранжевый тревожный признак - в группу высокого приоритета.
-  const rankedRecommendations = useMemo<RankedRecommendation[]>(() => {
-    return scoring.activeRecs
-      .map((recommendation, originalIndex) => {
-        let priority = BASE_RECOMMENDATION_PRIORITY[recommendation.domain] ?? 'medium';
-
-        const relatedRedFlags = scoring.activeRF.filter(redFlag =>
-          (RED_FLAG_RECOMMENDATION_DOMAINS[redFlag.id] ?? []).includes(recommendation.domain)
-        );
-
-        if (relatedRedFlags.some(redFlag => redFlag.level === 'Красный')) {
-          priority = 'critical';
-        } else if (relatedRedFlags.length > 0 && RECOMMENDATION_PRIORITY_META[priority].order > RECOMMENDATION_PRIORITY_META.high.order) {
-          priority = 'high';
-        }
-
-        const meta = RECOMMENDATION_PRIORITY_META[priority];
-        return {
-          ...recommendation,
-          priority,
-          priorityLabel: meta.label,
-          priorityOrder: meta.order,
-          originalIndex,
-        };
-      })
-      .sort((left, right) =>
-        left.priorityOrder - right.priorityOrder || left.originalIndex - right.originalIndex
-      )
-      .map(({ originalIndex: _originalIndex, ...recommendation }) => recommendation);
-  }, [scoring.activeRecs, scoring.activeRF]);
-
   // ── ГЕНЕРАЦИЯ ЗАКЛЮЧЕНИЯ ─────────────────────────────────────────────────────
   const generateReport = useCallback(() => {
     const d = new Date().toLocaleDateString('ru-RU');
@@ -1653,10 +1487,10 @@ export default function App() {
       t += `Значимых факторов риска не выявлено.\n\n`;
     }
 
-    if (rankedRecommendations.length) {
-      t += `РЕКОМЕНДАЦИИ В ПОРЯДКЕ ПРИОРИТЕТА:\n`;
-      rankedRecommendations.forEach(r => {
-        t += `[${r.priorityLabel}] ${r.domain}:\n`;
+    if (scoring.activeRecs.length) {
+      t += `РЕКОМЕНДАЦИИ:\n`;
+      scoring.activeRecs.forEach(r => {
+        t += `${r.domain}:\n`;
         r.actions.slice(0,3).forEach(a => { t += `- ${a}\n`; });
       });
       t += `\n`;
@@ -1669,7 +1503,7 @@ export default function App() {
     t += `Следующая оценка: через 1-3 месяца или при изменении клинического статуса.\n`;
     t += `\nВрач: ______________________________  Подпись: ________\n`;
     return t;
-  }, [form, scoring, metrics, rankedRecommendations]);
+  }, [form, scoring, metrics]);
 
   const parsedAge = parseNum(form.age);
   const isOutlier = parsedAge !== null && (parsedAge < RD.target_age.min || parsedAge > RD.target_age.max);
@@ -2549,42 +2383,51 @@ export default function App() {
                 </div>
               </div>
             )}
-            {/* Что стоит сделать - таблица */}
-            {rankedRecommendations.length > 0 && (
+
+            {/* Что стоит сделать — таблица */}
+            {scoring.activeRecs.length > 0 && (
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="px-5 pt-5 pb-3">
                   <p className="font-black text-slate-800 text-sm">На что обратить внимание</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Проблемы расположены по приоритету. Действия указаны отдельно в правом столбце.</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Обсудите с врачом на ближайшем приёме</p>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[620px] text-sm">
-                    <thead>
-                      <tr className="border-t border-slate-100 bg-slate-50">
-                        <th className="text-left text-[10px] font-black text-slate-400 uppercase px-5 py-2.5 w-1/2">Что настораживает</th>
-                        <th className="text-left text-[10px] font-black text-slate-400 uppercase px-5 py-2.5 w-1/2">Что делать</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {rankedRecommendations.map((recommendation, index) => {
-                        const style = RECOMMENDATION_PRIORITY_STYLES[recommendation.priority];
-                        const problem = decodeMedicalText(recommendation.problem);
-                        const action = decodeMedicalText(recommendation.pat);
-
-                        return (
-                          <tr key={`${recommendation.domain}-${index}`} className={`align-top transition ${style.patientRow}`}>
-                            <td className="px-5 py-4 text-slate-800 leading-snug">
-                              <span className={`inline-flex mb-2 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-wide ${style.badge}`}>
-                                {recommendation.priorityLabel}
-                              </span>
-                              <p className="font-bold">{problem}</p>
-                            </td>
-                            <td className="px-5 py-4 text-slate-700 leading-relaxed">{action}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-t border-slate-100 bg-slate-50">
+                      <th className="text-left text-[10px] font-black text-slate-400 uppercase px-5 py-2.5 w-1/2">Что настораживает</th>
+                      <th className="text-left text-[10px] font-black text-slate-400 uppercase px-5 py-2.5 w-1/2">Что делать</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {scoring.activeRecs.map((r, i) => {
+                      // Decode abbreviations in pat text
+                      const decoded = r.pat
+                        .replace(/ГДМ/g, 'гестационный диабет (диабет при беременности)')
+                        .replace(/ПЭ/g, 'преэклампсия (высокое давление при беременности)')
+                        .replace(/СПКЯ/g, 'синдром поликистозных яичников')
+                        .replace(/ИМТ/g, 'индекс массы тела')
+                        .replace(/АД/g, 'артериальное давление')
+                        .replace(/ХБП/g, 'хроническая болезнь почек')
+                        .replace(/СКВ/g, 'системная красная волчанка')
+                        .replace(/АФС/g, 'антифосфолипидный синдром')
+                        .replace(/НМГ/g, 'низкомолекулярный гепарин')
+                        .replace(/НОАК/g, 'антикоагулянтные препараты')
+                        .replace(/НПВП/g, 'обезболивающие (кроме парацетамола)')
+                        .replace(/ДГК/g, 'омега-3 (докозагексаеновая кислота)')
+                        .replace(/МК/g, 'мочевая кислота');
+                      // Split into problem / action at a verb
+                      const sentences = decoded.split(/(?<=[.!])\s+/);
+                      const problem = sentences[0] || decoded;
+                      const action = sentences.slice(1).join(' ') || 'Обсудите с врачом';
+                      return (
+                        <tr key={i} className="align-top hover:bg-slate-50 transition">
+                          <td className="px-5 py-3 text-slate-700 leading-snug">{problem}</td>
+                          <td className="px-5 py-3 text-slate-600 leading-snug">{action}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
 
@@ -2786,43 +2629,31 @@ export default function App() {
                     <List className="w-4 h-4"/> Полная детализация расчёта
                   </button>
                 </div>
+
                 {/* Рекомендации */}
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                  <div className="mb-4">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Рекомендации по выявленным проблемам</p>
-                    <p className="text-[11px] text-slate-400 mt-1">Расположены от первоочередных к поддерживающим. Цвет фона отражает приоритет, но не заменяет клиническую оценку.</p>
-                  </div>
-                  {rankedRecommendations.length > 0 ? (
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Рекомендации по выявленным проблемам</p>
+                  {scoring.activeRecs.length > 0 ? (
                     <div className="space-y-4">
-                      {rankedRecommendations.map((recommendation, index) => {
-                        const style = RECOMMENDATION_PRIORITY_STYLES[recommendation.priority];
-                        return (
-                          <div key={`${recommendation.domain}-${index}`} className={`border rounded-xl overflow-hidden ${style.card}`}>
-                            <div className={`px-4 py-3 border-b ${style.header}`}>
-                              <div className="flex flex-wrap items-start justify-between gap-2">
-                                <div>
-                                  <p className="font-black text-xs text-slate-900 uppercase">{recommendation.domain}</p>
-                                  <p className="text-xs text-slate-600 italic mt-0.5">{recommendation.problem}</p>
-                                </div>
-                                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-wide ${style.badge}`}>
-                                  {recommendation.priorityLabel}
-                                </span>
-                              </div>
-                            </div>
-                            <ul className="p-4 space-y-2 bg-white/70">
-                              {recommendation.actions.map((action, actionIndex) => (
-                                <li key={actionIndex} className="flex gap-2 text-xs text-slate-700 leading-relaxed">
-                                  <span className={`font-black shrink-0 mt-0.5 ${style.arrow}`}>→</span>
-                                  <span>{action}</span>
-                                </li>
-                              ))}
-                              <li className="text-[9px] text-slate-400 pt-1">Источник: {recommendation.src}</li>
-                            </ul>
+                      {scoring.activeRecs.map((r, i) => (
+                        <div key={i} className="border border-slate-100 rounded-xl overflow-hidden">
+                          <div className="bg-slate-50 px-4 py-3 border-b border-slate-100">
+                            <p className="font-black text-xs text-blue-700 uppercase">{r.domain}</p>
+                            <p className="text-xs text-slate-500 italic mt-0.5">{r.problem}</p>
                           </div>
-                        );
-                      })}
+                          <ul className="p-4 space-y-2">
+                            {r.actions.map((act, j) => (
+                              <li key={j} className="flex gap-2 text-xs text-slate-700 leading-relaxed">
+                                <span className="text-blue-500 font-black shrink-0 mt-0.5">→</span>
+                                <span>{act}</span>
+                              </li>
+                            ))}
+                            <li className="text-[9px] text-slate-400 pt-1">Источник: {r.src}</li>
+                          </ul>
+                        </div>
+                      ))}
                     </div>
-                  ) : <p className="text-sm text-slate-400 italic">Рекомендаций нет: факторы риска не выявлены</p>}
+                  ) : <p className="text-sm text-slate-400 italic">Рекомендаций нет — факторы риска не выявлены</p>}
                 </div>
 
               {/* Ограничения расчёта */}
