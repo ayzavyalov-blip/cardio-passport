@@ -2012,24 +2012,28 @@ export default function App() {
             className="px-8 py-3 bg-blue-700 text-white rounded-xl text-xs font-black uppercase flex items-center gap-3 disabled:bg-slate-200 disabled:text-slate-400 transition"
             onClick={() => {
               setIsCalc(true);
-              setTimeout(() => {
-                const newReport = generateReport();
-                setReport(newReport);
-                setHistory([{ date: new Date().toISOString(), text: newReport, author: 'Авточерновик' }]);
-                setIsCalc(false);
-                setView('results');
-                setTab('summary');
-                setCalcHistory(prev => [{
-                  date: new Date().toISOString(),
-                  name: form.patient_name,
-                  score: scoring.total,
-                  riskCat: scoring.riskCat,
-                  bmi: metrics.bmi,
-                  avgBP: `${metrics.avgSys}/${metrics.avgDia}`,
-                  reliability: valid.reliability,
-                  age: form.age,
-                }, ...prev].slice(0, 10));
-              }, 1200);
+              // requestAnimationFrame даёт React отрисовать спиннер,
+              // потом сразу выполняем — без искусственной задержки
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  const newReport = generateReport();
+                  setReport(newReport);
+                  setHistory([{ date: new Date().toISOString(), text: newReport, author: 'Авточерновик' }]);
+                  setCalcHistory((prev: any[]) => [{
+                    date: new Date().toISOString(),
+                    name: form.patient_name,
+                    score: scoring.total,
+                    riskCat: scoring.riskCat,
+                    bmi: metrics.bmi,
+                    avgBP: `${metrics.avgSys}/${metrics.avgDia}`,
+                    reliability: valid.reliability,
+                    age: form.age,
+                  }, ...prev].slice(0, 10));
+                  setIsCalc(false);
+                  setView('results');
+                  setTab('summary');
+                });
+              });
             }}>
             {isCalc ? <Clock className="w-4 h-4 animate-spin"/> : <FileCheck className="w-5 h-5"/>} Рассчитать риск
           </button>
