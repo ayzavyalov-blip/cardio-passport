@@ -503,9 +503,9 @@ const RD = {
         "Строгий контроль АД и протеинурии на протяжении следующей беременности",
         "Мониторинг двигательной активности плода с 26-28 нед следующей беременности",
         "Консультация акушера-гинеколога специализированного центра перед планированием следующей беременности",
-        "Психологическая поддержка — потеря беременности является тяжёлой психологической травмой",
+        "При необходимости: консультация психолога или психотерапевта",
       ],
-      pat:"Такой опыт очень тяжёл. Обратитесь к специалисту до следующей беременности — причину важно найти и устранить. Вы не одни.",
+      pat:"До следующей беременности важно пройти обследование и выяснить причину. Обратитесь к акушеру-гинеколог специализированного центра — они работают с такими ситуациями.",
       src:"КР МЗ РФ «Привычный выкидыш» 2022; Протокол МАРС 2024",
     },
     {
@@ -984,6 +984,8 @@ export default function App() {
     const vr = RD.validation;
 
     // Шаг 1: ФИО — обязательное
+    if (!form.consent_personal_data)
+      fe.consent_personal_data = 'Необходимо дать согласие для продолжения';
     if (!form.patient_name || form.patient_name.trim().length < 2)
       fe.patient_name = 'Обязательное поле';
 
@@ -1044,7 +1046,7 @@ export default function App() {
     });
 
     // Блокировки по шагам
-    const step1Fields = ['patient_name', 'active_min'];
+    const step1Fields = ['consent_personal_data', 'patient_name', 'active_min'];
     const step2Fields = ['height','weight','waist','sys1','dia1','sys2','dia2','sys3','dia3','bp_required'];
     const step3Fields = [...LAB_KEYS];
     const errorsForStep = (fields: string[]) => fields.some(k => fe[k]);
@@ -1083,9 +1085,9 @@ export default function App() {
     const add = (d: string, factor: string, pts: number) => { total += pts; dom[d] += pts; breakdown.push({d, factor, pts}); };
 
     // A — Семья
-    if (form.family_cvd === 'Да') add('A','Ранние ССЗ у родственников первой линии (родители, сибсы)', 2);
+    if (form.family_cvd === 'Да') add('A','Ранние ССЗ у родственников первой линии', 2);
     if (form.family_pe  === 'Да') add('A','Преэклампсия в семейном анамнезе', 3);
-    if (form.family_dm  === 'Да') add('A','СД 2 типа у родителей или сибсов', 2);
+    if (form.family_dm  === 'Да') add('A','СД 2 типа у родителей, братьев или сестёр', 2);
     if (Number(form.miscarriages) >= 2) add('A','Привычное невынашивание (≥ 2 выкидышей)', 3);
     if (form.pe_own === 'Да')     add('A','Преэклампсия в собственном анамнезе', 4);
     if (form.gdm === 'Да')        add('A','Гестационный диабет в анамнезе', 3);
@@ -1602,6 +1604,7 @@ export default function App() {
         {/* Почему заблокирована кнопка */}
         {valid.currentStepInvalid && (() => {
           const msgs: string[] = [];
+          if (valid.fe.consent_personal_data) msgs.push('необходимо дать согласие на обработку персональных данных');
           if (valid.fe.patient_name) msgs.push('ФИО пациентки');
           if (valid.fe.height || valid.fe.weight || valid.fe.waist) msgs.push('антропометрия вне допустимых значений');
           if ([1,2,3].some(i => valid.fe[`sys${i}`] || valid.fe[`dia${i}`])) msgs.push('некорректные значения АД');
@@ -1622,18 +1625,16 @@ export default function App() {
           {step === 1 && (
             <div className="space-y-5">
               {/* Согласие на обработку персональных данных */}
-              {!form.consent_personal_data && (
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-                  <p className="text-sm font-black text-amber-900 mb-3">Перед началом заполнения</p>
+              <div className={`rounded-2xl p-5 border ${form.consent_personal_data ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+  <p className={`text-sm font-black mb-3 ${form.consent_personal_data ? "text-green-800" : "text-amber-900"}`}>{form.consent_personal_data ? "✓ Согласие получено" : "Перед началом заполнения"}</p>
                   <p className="text-xs text-amber-800 mb-4 leading-relaxed">Анкета содержит персональные данные (ФИО, возраст) и клинические сведения. Данные хранятся только в браузере на этом устройстве и не передаются на сервер.</p>
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" className="mt-0.5 w-4 h-4 accent-blue-600 shrink-0"
                       checked={form.consent_personal_data === 'Да'}
                       onChange={e=>f({consent_personal_data: e.target.checked ? 'Да' : ''})}/>
-                    <span className="text-xs text-amber-900 font-bold">Я даю согласие на обработку персональных данных в рамках данного медицинского инструмента</span>
+                    <span className={`text-xs font-bold ${form.consent_personal_data ? "text-green-800" : "text-amber-900"}`}>Я даю согласие на обработку персональных данных в рамках данного медицинского инструмента</span>
                   </label>
-                </div>
-              )}
+              </div>
 
               {/* Кто заполняет */}
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-4">
@@ -1673,7 +1674,7 @@ export default function App() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className={lbl}>Ранние ССЗ у родственников первой линии</label><StableSelect value={form.family_cvd} onChange={v=>f({family_cvd:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect><p className="text-[10px] text-slate-400 mt-1">ИБС, инфаркт, инсульт у мужчин &lt; 55 лет, у женщин &lt; 65 лет</p></div>
                   <div><label className={lbl}>Преэклампсия у матери или сестёр</label><StableSelect value={form.family_pe} onChange={v=>f({family_pe:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option><option value="Не знаю">Нет данных / не знаю</option></StableSelect></div>
-                  <div><label className={lbl}>СД 2 типа у родителей или сибсов</label><StableSelect value={form.family_dm} onChange={v=>f({family_dm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option><option value="Не знаю">Нет данных / не знаю</option></StableSelect></div>
+                  <div><label className={lbl}>СД 2 типа у родителей, братьев или сестёр</label><StableSelect value={form.family_dm} onChange={v=>f({family_dm:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option><option value="Не знаю">Нет данных / не знаю</option></StableSelect></div>
                 </div>
               </div>
 
@@ -2055,15 +2056,15 @@ export default function App() {
         },
         'Умеренный': {
           title: 'Есть несколько моментов, которые стоит обсудить с врачом',
-          text: 'Мы нашли факторы, которые желательно скорректировать до беременности. Ничего критичного — но лучше разобраться заранее. Покажите этот результат гинекологу на ближайшем приёме.',
+          text: 'Выявлены факторы, которые лучше скорректировать до беременности. Покажите этот результат гинекологу на ближайшем приёме. Покажите этот результат гинекологу на ближайшем приёме.',
         },
         'Повышенный': {
           title: 'Нужна консультация врача до беременности',
-          text: 'Обнаружены факторы, которые важно разобрать с врачом до того, как планировать беременность. Это не значит, что беременность невозможна — просто нужна дополнительная подготовка.',
+          text: 'Обнаружены факторы, которые важно разобрать с врачом до того, как планировать беременность. Беременность возможна — но нужна дополнительная подготовка.',
         },
         'Высокий': {
           title: 'Пожалуйста, обратитесь к врачу в ближайшее время',
-          text: 'Результаты говорят о том, что перед беременностью важно пройти обследование и получить консультацию специалистов. Не откладывайте — чем раньше начнёте подготовку, тем лучше.',
+          text: 'Результаты говорят о том, что перед беременностью важно пройти обследование и получить консультацию специалистов. Чем раньше начнёте подготовку, тем лучше.',
         },
       };
       const catInfo = catExplain[scoring.riskCat] || catExplain['Умеренный'];
@@ -2217,6 +2218,19 @@ export default function App() {
               <button onClick={() => window.print()}
                 className="px-2 py-1.5 bg-slate-800 text-white rounded-lg text-[9px] font-black uppercase hover:bg-slate-700 transition flex items-center gap-1">
                 <FileDown className="w-3 h-3"/> PDF
+              </button>
+              <button onClick={() => {
+                try { localStorage.removeItem('cardio_draft'); } catch {}
+                setForm(DEFAULT_FORM);
+                setReport('');
+                setHistory([]);
+                setCalcHistory(prev => prev);
+                setView('wizard');
+                setStep(1);
+                setTab('summary');
+              }}
+                className="px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase hover:bg-blue-700 transition flex items-center gap-1 shrink-0">
+                + Новый расчёт
               </button>
               <button onClick={() => { setView('wizard'); setStep(1); }}
                 className="px-2 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[9px] font-black uppercase hover:bg-slate-200 transition hidden sm:block">
