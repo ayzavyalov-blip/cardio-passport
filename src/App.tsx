@@ -59,11 +59,11 @@ const RD = {
   ],
   critical_combinations: [
     { id:"CC-001", cond:(d,m)=> ( d.coc_type==='КОК'||d.coc_type==='Пластырь'||d.coc_type==='Кольцо' )&&d.migraine==='С аурой', effect:"+1 ступень риска", title:"КОК + Мигрень с аурой" },
-    { id:"CC-004", cond:(d,m)=> d.spky==='Да'&&Number(d.waist)>=80, effect:"+1 ступень риска", title:"ПМОС + Абдоминальное ожирение" },
+    { id:"CC-004", cond:(d,m)=> d.spky==='Да'&&Number(d.waist)>=80, effect:"+1 ступень риска", title:"СПЯ + Абдоминальное ожирение" },
     { id:"CC-011", cond:(d,m)=> Number(d.uric_acid)>350&&m.avgSys>=130, effect:"+1 ступень риска", title:"Гиперурикемия + Повышенное АД" },
     { id:"CC-012", cond:(d,m)=> (d.smoke_cig==='Да'||d.smoke_vape==='Да'||d.smoke_hookah==='Да'||d.smoke_snus==='Да')&&m.bmi>=30, effect:"+1 ступень риска", title:"Курение + Ожирение" },
     { id:"CC-013", cond:(d,m)=> d.migraine==='С аурой'&&m.bmi>=30, effect:"+1 ступень риска", title:"Мигрень с аурой + Ожирение" },
-    { id:"CC-014", cond:(d,m)=> d.spky==='Да'&&Number(d.uric_acid)>350, effect:"+1 ступень риска", title:"ПМОС + Гиперурикемия" },
+    { id:"CC-014", cond:(d,m)=> d.spky==='Да'&&Number(d.uric_acid)>350, effect:"+1 ступень риска", title:"СПЯ + Гиперурикемия" },
   ],
   recs: [
     {
@@ -156,7 +156,7 @@ const RD = {
         "Целевое снижение на 5-7% от исходного веса до наступления беременности",
         "Дефицит калорий 300-400 ккал/сут: уменьшение порций, отказ от сладких напитков и фастфуда",
         "Физическая активность ≥ 150 мин/нед: ходьба, плавание, велосипед",
-        "При ПМОС + ИМТ 25-30: исключить инсулинорезистентность (HOMA-IR), консультация эндокринолога",
+        "При СПЯ + ИМТ 25-30: исключить инсулинорезистентность (HOMA-IR), консультация эндокринолога",
         "Контроль веса и объёма талии каждые 4 недели",
       ],
       pat:"Небольшое снижение веса — всего 5-7% — значительно снижает риски при беременности. Небольшие изменения в питании и больше движения дают хороший результат.",
@@ -171,7 +171,7 @@ const RD = {
         "Дефицит калорий 500 ккал/сут; минимальная суточная калорийность — не менее 1400 ккал/сут",
         "Фолиевая кислота: 800 мкг/сут (при ожирении снижена биодоступность)",
         "Направление к диетологу для индивидуального плана питания",
-        "При ИМТ ≥ 35 + ПМОС: обязательна консультация эндокринолога (инсулинорезистентность)",
+        "При ИМТ ≥ 35 + СПЯ: обязательна консультация эндокринолога (инсулинорезистентность)",
         "Физическая активность: начать с 15-20 мин/день, постепенно увеличивать до 150 мин/нед",
       ],
       pat:"Снижение веса до беременности — важная инвестиция в здоровье вас и малыша. Обратитесь к диетологу — без жёстких диет, с реальным результатом.",
@@ -408,19 +408,19 @@ const RD = {
     },
     // ── РЕПРОДУКТИВНЫЙ АНАМНЕЗ ────────────────────────────────────────────────
     {
-      domain:"ПМОС",
-      problem:"Полиэндокринный метаболический овариальный синдром (ПМОС)",
+      domain:"СПЯ",
+      problem:"Синдром поликистозных яичников (СПЯ)",
       cond:(d,m)=>d.spky==='Да',
       actions:[
-        "ТТГ + АТ к ТПО — аутоиммунный тиреоидит сопутствует ПМОС в 20-40% случаев",
+        "ТТГ + АТ к ТПО — аутоиммунный тиреоидит сопутствует СПЯ в 20-40% случаев",
         "Глюкоза натощак + инсулин → HOMA-IR; при HOMA-IR ≥ 2,5 — консультация эндокринолога",
-        "Витамин D 25(OH): дефицит при ПМОС в 60-85%; целевой уровень ≥ 30 нг/мл (800-2000 МЕ/сут)",
+        "Витамин D 25(OH): дефицит при СПЯ в 60-85%; целевой уровень ≥ 30 нг/мл (800-2000 МЕ/сут)",
         "Восстановление регулярного цикла (21-35 дней) — ключевая цель до зачатия",
         "При HOMA-IR ≥ 2,5 + нарушение цикла — метформин по назначению гинеколога/эндокринолога",
         "Фолиевая кислота: 800 мкг/сут при ИМТ ≥ 30; 400 мкг/сут при нормальном ИМТ",
       ],
-      pat:"ПМОС не препятствует беременности при правильной подготовке. Сдайте анализы на гормоны и глюкозу. Нормализация веса и режима значительно улучшают прогноз.",
-      src:"КР МЗ РФ «ПМОС» 2021; ESHRE PCOS 2023",
+      pat:"СПЯ не препятствует беременности при правильной подготовке. Сдайте анализы на гормоны и глюкозу. Нормализация веса и режима значительно улучшают прогноз.",
+      src:"КР МЗ РФ «СПЯ» 2021; ESHRE PCOS 2023",
     },
     {
       domain:"Нарушение менструального цикла",
@@ -428,7 +428,7 @@ const RD = {
       cond:(d,m)=>d.cycle && d.cycle !== 'Регулярный (21–35 дней)',
       actions:[
         "Гормональное обследование: ФСГ, ЛГ, эстрадиол, пролактин, АМГ, ТТГ — в 2-5 день цикла",
-        "При аменорее > 3 мес: исключить гипоталамическую аменорею (ИМТ, нутритивный статус, стресс), ПМОС, гиперпролактинемию",
+        "При аменорее > 3 мес: исключить гипоталамическую аменорею (ИМТ, нутритивный статус, стресс), СПЯ, гиперпролактинемию",
         "УЗИ органов малого таза — оценка эндометрия и яичников",
         "При гипоталамической аменорее: нормализация веса и питания — первый шаг",
         "Консультация гинеколога-эндокринолога для подбора индукции овуляции при планировании беременности",
@@ -679,7 +679,7 @@ const RD = {
     { short:"КР МЗ РФ «Нормальная беременность» 2023", full:"Клинические рекомендации «Нормальная беременность», МКБ-10: Z32–Z36. Утверждены Министерством здравоохранения Российской Федерации, 2023 г. Применяются с 01.01.2024. ID 288." },
     { short:"КР МЗ РФ «Преэклампсия. Эклампсия» 2024", full:"Клинические рекомендации «Преэклампсия. Эклампсия. Отёки, протеинурия и гипертензивные расстройства во время беременности, в родах и послеродовом периоде», МКБ-10: O10–O16. Утверждены Министерством здравоохранения Российской Федерации, 2024 г. Применяются с 01.01.2025." },
     { short:"КР МЗ РФ «АГ у взрослых» 2024", full:"Клинические рекомендации «Артериальная гипертензия у взрослых», МКБ-10: I10–I15. Утверждены Министерством здравоохранения Российской Федерации, 2024 г. Опубликованы: Российский кардиологический журнал. 2024;29(9):6117. DOI: 10.15829/1560-4071-2024-6117." },
-    { short:"КР МЗ РФ «ПМОС» 2021", full:"Клинические рекомендации «Полиэндокринный метаболический овариальный синдром (ПМОС)», МКБ-10: E28.2. Утверждены Министерством здравоохранения Российской Федерации, 2021 г." },
+    { short:"КР МЗ РФ «СПЯ» 2021", full:"Клинические рекомендации «Синдром поликистозных яичников (СПЯ)», МКБ-10: E28.2. Утверждены Министерством здравоохранения Российской Федерации, 2021 г." },
     { short:"КР МЗ РФ «Контрацепция» 2021", full:"Клинические рекомендации «Контрацепция», МКБ-10: Z30. Утверждены Министерством здравоохранения Российской Федерации, 2021 г." },
     { short:"КР МЗ РФ «Мигрень» 2021", full:"Клинические рекомендации «Мигрень», МКБ-10: G43. Утверждены Министерством здравоохранения Российской Федерации, 2021 г." },
     { short:"КР МЗ РФ «Подагра» 2021", full:"Клинические рекомендации «Подагра», МКБ-10: M10. Утверждены Министерством здравоохранения Российской Федерации, 2021 г." },
@@ -981,7 +981,7 @@ export default function App() {
     // Незаполненные клинические поля (для раздела ограничений)
     const anySmokeFilled = form.smoke_cig || form.smoke_vape || form.smoke_hookah || form.smoke_snus;
     const clinicalFields: [string,string][] = [
-      ['migraine','Мигрень'], ['spky','ПМОС'],
+      ['migraine','Мигрень'], ['spky','СПЯ'],
       ['family_pe','ПЭ в семье'], ['family_cvd','ССЗ в семье'],
       ['pe_own','ПЭ у самой'], ['gdm','ГДМ'], ['chronic_htn','Хроническая АГ'],
       ['dm','Сахарный диабет'], ['ckd','Заболевание почек'],
@@ -1126,7 +1126,7 @@ export default function App() {
     if (form.stillbirth === 'Да') add('A','Антенатальная гибель плода в анамнезе', 3);
 
     // B — Репродукция
-    if (form.spky === 'Да') add('B','Полиэндокринный метаболический овариальный синдром (ПМОС)', 3);
+    if (form.spky === 'Да') add('B','Синдром поликистозных яичников (СПЯ)', 3);
     const hasCombined = form.coc_type === 'КОК' || form.coc_type === 'Пластырь' || form.coc_type === 'Кольцо';
     if (hasCombined && form.bp_measured === 'Нет') add('B','Комбинированная гормональная контрацепция без контроля АД', 3);
     if (form.risky_meds === 'Да') add('B','Лекарства с риском при беременности', 4);
@@ -1254,7 +1254,7 @@ export default function App() {
     // Эндокринолог — раздельно по показаниям
     if (f.dm === 'Да') specialists.push('эндокринолог (сахарный диабет)');
     if (f.gdm === 'Да' && f.dm !== 'Да') specialists.push('эндокринолог (ГСД в анамнезе — скрининг СД 2 типа)');
-    if (f.spky === 'Да') specialists.push('эндокринолог / гинеколог-эндокринолог (ПМОС)');
+    if (f.spky === 'Да') specialists.push('эндокринолог / гинеколог-эндокринолог (СПЯ)');
     if (parseNum(f.tsh) !== null && (parseNum(f.tsh)! < 0.4 || parseNum(f.tsh)! > 2.5) && f.autoimmune !== 'АИТ')
       specialists.push('эндокринолог (отклонение ТТГ)');
 
@@ -1330,7 +1330,7 @@ export default function App() {
 
   // ── HEADER ──────────────────────────────────────────────────────────────────
   const Header = () => (
-    <header className="bg-white border-b px-4 md:px-6 h-14 flex justify-between items-center shrink-0 z-50">
+    <header className="bg-white border-b px-4 md:px-6 h-14 grid grid-cols-[auto_1fr_auto] items-center shrink-0 z-50 gap-3">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-black text-xs">ПС</div>
         <div className="hidden sm:block">
@@ -1338,12 +1338,15 @@ export default function App() {
           <p className="text-[10px] text-slate-400 mt-0.5">Версия {RD.version} · Завьялова Ю.А., Олина А.А.</p>
         </div>
       </div>
-      <div className="flex items-center gap-2 border-l pl-3 md:pl-4">
-        {['Врач','Пациентка'].map(r => (
-          <button key={r} onClick={() => { setRole(r); f({who_fills: r}); if (view !== 'results') setView('dashboard'); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${role===r ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}>{r}</button>
-        ))}
+      <div className="flex justify-center">
+        <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-1 border border-slate-200">
+          {['Врач','Пациентка'].map(r => (
+            <button key={r} onClick={() => { setRole(r); f({who_fills: r}); if (view !== 'results') setView('dashboard'); }}
+              className={`px-4 py-1.5 rounded-lg text-xs font-black transition ${role===r ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-200'}`}>{r}</button>
+          ))}
+        </div>
       </div>
+      <div></div>
     </header>
   );
 
@@ -1446,7 +1449,7 @@ export default function App() {
             { icon: HeartPulse, accent:'bg-rose-500', soft:'bg-rose-50', text:'text-rose-600', title:'Кардиометаболический риск',
               items:['ИМТ и масса тела','Окружность талии','Артериальное давление','Липидный профиль'] },
             { icon: Baby, accent:'bg-purple-500', soft:'bg-purple-50', text:'text-purple-600', title:'Репродуктивный риск',
-              items:['ПМОС, цикл','Акушерский анамнез','КОК и сосуды'] },
+              items:['СПЯ, цикл','Акушерский анамнез','КОК и сосуды'] },
             { icon: Utensils, accent:'bg-emerald-500', soft:'bg-emerald-50', text:'text-emerald-700', title:'Нутритивный риск',
               items:['Чеклист FIGO','Дотация фолатов','Ферритин, альбумин'] },
             { icon: Cigarette, accent:'bg-orange-500', soft:'bg-orange-50', text:'text-orange-600', title:'Поведенческий риск',
@@ -1741,7 +1744,7 @@ export default function App() {
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Репродуктивный статус</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className={lbl}>Регулярность менструального цикла</label><StableSelect value={form.cycle} onChange={v=>f({cycle:v})} className={sel}><option value="">— Не указано</option><option>Регулярный (21–35 дней)</option><option>Нерегулярный (&gt; 35 или &lt; 21 дня)</option><option>Отсутствует &gt; 3 месяцев</option><option value="На фоне препаратов">Отсутствует на фоне гормональных препаратов (норма)</option></StableSelect></div>
-                  <div><label className={lbl}>Полиэндокринный метаболический овариальный синдром (ПМОС)</label><StableSelect value={form.spky} onChange={v=>f({spky:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Синдром поликистозных яичников (СПЯ)</label><StableSelect value={form.spky} onChange={v=>f({spky:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
                   <div>
                     <label className={lbl}>Гормональная контрацепция</label>
                     <StableSelect value={form.coc_type} onChange={v=>f({coc_type:v})} className={sel}>
@@ -1757,7 +1760,19 @@ export default function App() {
                     <p className="text-[10px] text-slate-400 mt-1">КОК, пластырь, кольцо — комбинированные. Мини-пили, Мирена, имплант — прогестиновые (другой профиль риска)</p>
                   </div>
                   <div><label className={lbl}>Выкидыши в анамнезе</label><StableSelect value={form.miscarriages} onChange={v=>f({miscarriages:v})} className={sel}><option value="">— Не указано</option><option value="0">Нет</option><option value="1">1</option><option value="2">≥ 2</option></StableSelect></div>
-                  <div><label className={lbl}>Болезненные менструации</label><StableSelect value={form.dysmenorrhea} onChange={v=>f({dysmenorrhea:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Умеренные</option><option>Тяжёлые (требуют анальгетиков)</option></StableSelect></div>
+                  <div>
+                    <label className={lbl}>Болезненные менструации</label>
+                    <StableSelect value={form.dysmenorrhea} onChange={v=>f({dysmenorrhea:v})} className={sel}>
+                      <option value="">— Не указано</option>
+                      <option>Нет</option>
+                      <option>Умеренные</option>
+                      <option>Тяжёлые (требуют анальгетиков)</option>
+                      <option value="Маскировано">Маскировано приёмом гормональной контрацепции</option>
+                    </StableSelect>
+                    {(form.coc_type==='Мини-пили'||form.coc_type==='Мирена'||form.coc_type==='Имплант') && (
+                      <p className="text-[10px] text-amber-600 mt-1">На фоне прогестиновой контрацепции дисменорея обычно отсутствует/уменьшается. Если она была выраженной до начала приёма — отметьте «Маскировано»</p>
+                    )}
+                  </div>
                   {(form.coc_type === 'КОК' || form.coc_type === 'Пластырь' || form.coc_type === 'Кольцо') && (
                     <div className="sm:col-span-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                       <label className={lbl}>АД контролируется на фоне приёма?</label>
@@ -1831,9 +1846,24 @@ export default function App() {
                     <p className="text-[10px] text-slate-400 mt-1">Строгое исключение групп продуктов, голодание, переедание с очищением</p>
                   </div>
                   <div><label className={lbl}>Фолиевая кислота</label><StableSelect value={form.folate} onChange={v=>f({folate:v})} className={sel}><option value="">— Не указано</option><option value="Да">Да, принимаю</option><option value="Нет">Нет</option></StableSelect></div>
-                  <div>
-                    <label className={lbl}>Физическая активность (мин/нед)</label>
-                    <NumInput value={form.active_min} onChange={v=>f({active_min:v})} className={`${inp} ${errBorder('active_min')}`} placeholder="Напр. 150"/>
+                  <div className="sm:col-span-2">
+                    <label className={lbl}>Физическая активность</label>
+                    <StableSelect
+                      value={form.active_min === '' ? '' : (Number(form.active_min) >= 150 ? '5plus' : Number(form.active_min) >= 90 ? '3-4' : Number(form.active_min) >= 30 ? '1-2' : '0')}
+                      onChange={v => {
+                        const map: Record<string,string> = { '0':'0', '1-2':'60', '3-4':'120', '5plus':'180' };
+                        f({active_min: map[v] ?? ''});
+                      }}
+                      className={sel}>
+                      <option value="">— Не указано</option>
+                      <option value="0">Не занимаюсь / реже 1 раза в неделю</option>
+                      <option value="1-2">1–2 раза в неделю (по 30+ мин)</option>
+                      <option value="3-4">3–4 раза в неделю (по 30+ мин)</option>
+                      <option value="5plus">5 и более раз в неделю (по 30+ мин) — рекомендуемый уровень</option>
+                    </StableSelect>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Под физической активностью понимается любое умеренное упражнение длительностью от 30 минут: быстрая ходьба, плавание, велосипед, фитнес. Цель ВОЗ — не менее 150 минут в неделю (≈ 5 раз по 30 мин).
+                    </p>
                     <Err k="active_min"/>
                   </div>
                 </div>
@@ -1991,7 +2021,7 @@ export default function App() {
                       ref:'Норма: 35–52 г/л. < 35 г/л — гипоальбуминемия (нутритивный дефицит) — ESPEN 2021; КР МЗ РФ',
                       unit:'г/л' },
                     { k:'tsh',         l:'ТТГ',
-                      ref:'Лаб. норма: 0,4–4,0 мЕд/л. Целевой до зачатия: 0,4–2,5 мЕд/л при АТ-ТПО(+) или лечении гипотиреоза — Протокол МАРС 2024 v3.1; КР МЗ РФ «Заболевания щитовидной железы» 2021',
+                      ref:'Лаб. норма: 0,4–4,0 мЕд/л. У женщин с АТ-ТПО(+) при планировании беременности: контроль ТТГ обязателен — КР МЗ РФ «Гипотиреоз» 2024 (рек. 4). Целевой ≤ 2,5 мЕд/л — Протокол МАРС 2024 v3.1',
                       unit:'мЕд/л' },
                     { k:'glucose',     l:'Глюкоза натощак',
                       ref:'Норма: < 6,1 ммоль/л (плазма). Порог риска ГСД: ≥ 5,1 ммоль/л — критерий ПГТТ (ВОЗ 2013; КР МЗ РФ «ГСД» 2020)',
@@ -2256,7 +2286,7 @@ export default function App() {
                       const decoded = r.pat
                         .replace(/ГДМ/g, 'гестационный диабет (диабет при беременности)')
                         .replace(/ПЭ/g, 'преэклампсия (высокое давление при беременности)')
-                        .replace(/ПМОС/g, 'синдром поликистозных яичников')
+                        .replace(/СПЯ/g, 'синдром поликистозных яичников')
                         .replace(/ИМТ/g, 'индекс массы тела')
                         .replace(/АД/g, 'артериальное давление')
                         .replace(/ХБП/g, 'хроническая болезнь почек')
@@ -2705,7 +2735,7 @@ export default function App() {
                             'акушер-гинеколог',
                             ...(metrics.avgSys>=130||scoring.dom['G']>=3||form.chronic_htn==='Да'?['кардиолог']:[]),
                             ...(form.dm==='Да'?['эндокринолог (СД)']:[]),
-                            ...(form.spky==='Да'?['эндокринолог (ПМОС)']:[]),
+                            ...(form.spky==='Да'?['эндокринолог (СПЯ)']:[]),
                             ...(form.ckd==='Да'?['нефролог']:[]),
                             ...(form.autoimmune==='СКВ'||form.autoimmune==='АФС'?[`ревматолог (${form.autoimmune})`]:[]),
                             ...(form.autoimmune==='АИТ'?['эндокринолог (АИТ)']:[]),
