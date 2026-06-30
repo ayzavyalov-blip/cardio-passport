@@ -8,7 +8,7 @@ import {
 
 // ─── СПРАВОЧНИК ПРАВИЛ ────────────────────────────────────────────────────────
 const RD = {
-  version: "23.06.2026",
+  version: "30.06.2026",
   target_age: { min: 18, max: 45 },
   domains: {
     A: { name: "Семейный анамнез", max: 10 },
@@ -1112,7 +1112,7 @@ export default function App() {
     if (form.stillbirth === 'Да') add('A','Антенатальная гибель плода в анамнезе', 3);
 
     // B — Репродукция
-    if (form.spky === 'Да') add('B','Полиэндокринный метаболический овариальный синдром (ПМОС) (ПМОС)', 3);
+    if (form.spky === 'Да') add('B','Полиэндокринный метаболический овариальный синдром (ПМОС)', 3);
     const hasCombined = form.coc_type === 'КОК' || form.coc_type === 'Пластырь' || form.coc_type === 'Кольцо';
     if (hasCombined && form.bp_measured === 'Нет') add('B','Комбинированная гормональная контрацепция без контроля АД', 3);
     if (form.risky_meds === 'Да') add('B','Лекарства с риском при беременности', 4);
@@ -1230,21 +1230,47 @@ export default function App() {
     const dom = scoring.dom;
     const hasComplexObs = f.pe_own === 'Да' || f.preterm === 'Да' || f.fgr === 'Да' || f.stillbirth === 'Да';
     const specialists: string[] = [];
-    if (hasComplexObs) specialists.push('акушер-гинеколог специализированного центра (осложнённый анамнез)');
-    else specialists.push('акушер-гинеколог (прегравидарная консультация)');
-    if (metrics.avgSys >= 130 || dom['G'] >= 3) specialists.push('кардиолог (АД, кардиоваскулярный риск)');
-    if (f.dm==='Да'||f.gdm==='Да'||f.spky==='Да'||(parseNum(f.tsh)!==null&&(parseNum(f.tsh)!<0.4||parseNum(f.tsh)!>2.5)))
-      specialists.push('эндокринолог (ПМОС / нарушения обмена / тиреопатия)');
-    if (f.ckd==='Да') specialists.push('нефролог (ХБП)');
-    if (f.autoimmune && f.autoimmune!=='Нет') {
-      if (f.autoimmune==='АИТ') specialists.push('эндокринолог (АИТ)');
-      else specialists.push(`ревматолог (${f.autoimmune})`);
-    }
-    if (f.thrombosis==='Да'||Number(f.miscarriages)>=2) specialists.push('гематолог (тромбофилия / привычное невынашивание)');
-    if (f.migraine==='С аурой'||f.migraine==='Возможная') specialists.push('невролог (мигрень / головные боли)');
-    if (f.risky_meds==='Да') specialists.push('профильный специалист (коррекция лекарственной терапии)');
-    if (dom['H']>=3||(parseNum(f.albumin)!==null&&parseNum(f.albumin)!<35)||f.diet_restrict==='Да') specialists.push('диетолог (нутритивный статус)');
-    if (f.smoke_cig==='Да'||f.smoke_vape==='Да'||f.smoke_hookah==='Да'||f.smoke_snus==='Да') specialists.push('терапевт (отказ от курения)');
+    // Акушер-гинеколог — всегда один, в зависимости от анамнеза
+    if (hasComplexObs) specialists.push('акушер-гинеколог специализированного центра (осложнённый акушерский анамнез)');
+    else specialists.push('акушер-гинеколог (плановая прегравидарная консультация)');
+
+    // Кардиолог — по АД или кардиометаболическому домену, либо хр. АГ
+    if (metrics.avgSys >= 130 || dom['G'] >= 3 || f.chronic_htn === 'Да')
+      specialists.push('кардиолог (артериальное давление / хроническая АГ)');
+
+    // Эндокринолог — раздельно по показаниям
+    if (f.dm === 'Да') specialists.push('эндокринолог (сахарный диабет)');
+    if (f.gdm === 'Да' && f.dm !== 'Да') specialists.push('эндокринолог (ГСД в анамнезе — скрининг СД 2 типа)');
+    if (f.spky === 'Да') specialists.push('эндокринолог / гинеколог-эндокринолог (ПМОС)');
+    if (parseNum(f.tsh) !== null && (parseNum(f.tsh)! < 0.4 || parseNum(f.tsh)! > 2.5) && f.autoimmune !== 'АИТ')
+      specialists.push('эндокринолог (отклонение ТТГ)');
+
+    // Нефролог — только при ХБП
+    if (f.ckd === 'Да') specialists.push('нефролог (хроническая болезнь почек)');
+
+    // Аутоиммунные — раздельно по типу
+    if (f.autoimmune === 'СКВ' || f.autoimmune === 'АФС') specialists.push(`ревматолог (${f.autoimmune})`);
+    if (f.autoimmune === 'АИТ') specialists.push('эндокринолог (аутоиммунный тиреоидит)');
+    if (f.autoimmune === 'Другое') specialists.push('ревматолог (аутоиммунное заболевание)');
+
+    // Гематолог — тромбоз или невынашивание
+    if (f.thrombosis === 'Да') specialists.push('гематолог (тромбоз в анамнезе)');
+    if (Number(f.miscarriages) >= 2 && f.thrombosis !== 'Да') specialists.push('гематолог (привычное невынашивание — скрининг тромбофилии)');
+
+    // Невролог — мигрень или лекарства неврологического профиля
+    if (f.migraine === 'С аурой' || f.migraine === 'Возможная') specialists.push('невролог (мигрень / головные боли)');
+
+    // Диетолог — нутритивные дефициты
+    if (dom['E'] >= 3 || (parseNum(f.albumin) !== null && parseNum(f.albumin)! < 35) || f.diet_restrict === 'Да' || (parseNum(f.ferritin) !== null && parseNum(f.ferritin)! < 30))
+      specialists.push('диетолог (нутритивный статус / дефициты)');
+
+    // Терапевт — курение
+    if (f.smoke_cig==='Да'||f.smoke_vape==='Да'||f.smoke_hookah==='Да'||f.smoke_snus==='Да')
+      specialists.push('терапевт (отказ от курения)');
+
+    // Лекарства с риском — направление к назначившему специалисту, не общий «профильный»
+    if (f.risky_meds === 'Да')
+      specialists.push('специалист, назначивший препарат (пересмотр терапии перед зачатием)');
 
     t += `РЕКОМЕНДУЕМЫЕ КОНСУЛЬТАЦИИ:\n`;
     specialists.forEach(s => { t += `- ${s}\n`; });
@@ -1702,7 +1728,7 @@ export default function App() {
                 <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest border-b pb-3 mb-4">Репродуктивный статус</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className={lbl}>Регулярность менструального цикла</label><StableSelect value={form.cycle} onChange={v=>f({cycle:v})} className={sel}><option value="">— Не указано</option><option>Регулярный (21–35 дней)</option><option>Нерегулярный (&gt; 35 или &lt; 21 дня)</option><option>Отсутствует &gt; 3 месяцев</option><option value="На фоне препаратов">Отсутствует на фоне гормональных препаратов (норма)</option></StableSelect></div>
-                  <div><label className={lbl}>Полиэндокринный метаболический овариальный синдром (ПМОС) (ПМОС)</label><StableSelect value={form.spky} onChange={v=>f({spky:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
+                  <div><label className={lbl}>Полиэндокринный метаболический овариальный синдром (ПМОС)</label><StableSelect value={form.spky} onChange={v=>f({spky:v})} className={sel}><option value="">— Не указано</option><option>Нет</option><option>Да</option></StableSelect></div>
                   <div>
                     <label className={lbl}>Гормональная контрацепция</label>
                     <StableSelect value={form.coc_type} onChange={v=>f({coc_type:v})} className={sel}>
@@ -1712,7 +1738,7 @@ export default function App() {
                       <option value="Пластырь">Пластырь (комбинированный)</option>
                       <option value="Кольцо">Вагинальное кольцо (НоваРинг)</option>
                       <option value="Мини-пили">Мини-пили (только прогестин)</option>
-                      <option value="Мирена">Спираль Мирена / Джайдесс</option>
+                      <option value="Мирена">Спираль Мирена / Джайдес</option>
                       <option value="Имплант">Имплант (Импланон)</option>
                     </StableSelect>
                     <p className="text-[10px] text-slate-400 mt-1">КОК, пластырь, кольцо — комбинированные. Мини-пили, Мирена, имплант — прогестиновые (другой профиль риска)</p>
@@ -1825,10 +1851,10 @@ export default function App() {
               </div>
 
               {/* Соматический анамнез — всегда открыт */}
-              <div className={`p-5 md:p-6 rounded-2xl border ${(form.chronic_htn==='Да'||form.dm==='Да'||form.ckd==='Да'||form.autoimmune==='Да'||form.thrombosis==='Да'||form.risky_meds==='Да') ? 'border-amber-200 bg-amber-50/30' : 'bg-white border-slate-200'}`}>
+              <div className={`p-5 md:p-6 rounded-2xl border ${(form.chronic_htn==='Да'||form.dm==='Да'||form.ckd==='Да'||(form.autoimmune&&form.autoimmune!=='Нет')||form.thrombosis==='Да'||form.risky_meds==='Да') ? 'border-amber-200 bg-amber-50/30' : 'bg-white border-slate-200'}`}>
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
                   <h3 className="font-black text-xs uppercase text-slate-400 tracking-widest">Соматический анамнез</h3>
-                  {(form.chronic_htn==='Да'||form.dm==='Да'||form.ckd==='Да'||form.autoimmune==='Да'||form.thrombosis==='Да'||form.risky_meds==='Да') && (
+                  {(form.chronic_htn==='Да'||form.dm==='Да'||form.ckd==='Да'||(form.autoimmune&&form.autoimmune!=='Нет')||form.thrombosis==='Да'||form.risky_meds==='Да') && (
                     <span className="text-[10px] text-amber-700 font-bold bg-amber-100 px-2 py-1 rounded-lg">Выявлены факторы высокого риска</span>
                   )}
                 </div>
@@ -2662,7 +2688,18 @@ export default function App() {
                           {scoring.riskCat === 'Низкий' && 'Плановое наблюдение, стандартная подготовка'}
                           {scoring.riskCat === 'Умеренный' && 'Коррекция модифицируемых факторов до зачатия'}
                           {scoring.riskCat === 'Повышенный' && 'Расширенное обследование, консультации профильных специалистов'}
-                          {scoring.riskCat === 'Высокий' && `Консультации до зачатия: ${['акушер-гинеколог', ...(metrics.avgSys>=130||scoring.dom['G']>=3?['кардиолог']:[]), ...(form.dm==='Да'||form.gdm==='Да'||form.spky==='Да'?['эндокринолог']:[]), ...(form.ckd==='Да'?['нефролог']:[]), ...(form.autoimmune==='Да'?['ревматолог']:[]), ...(form.thrombosis==='Да'||Number(form.miscarriages)>=2?['гематолог']:[]), ...(form.migraine==='С аурой'?['невролог']:[])].join(', ')}`}
+                          {scoring.riskCat === 'Высокий' && `Консультации до зачатия: ${[
+                            'акушер-гинеколог',
+                            ...(metrics.avgSys>=130||scoring.dom['G']>=3||form.chronic_htn==='Да'?['кардиолог']:[]),
+                            ...(form.dm==='Да'?['эндокринолог (СД)']:[]),
+                            ...(form.spky==='Да'?['эндокринолог (ПМОС)']:[]),
+                            ...(form.ckd==='Да'?['нефролог']:[]),
+                            ...(form.autoimmune==='СКВ'||form.autoimmune==='АФС'?[`ревматолог (${form.autoimmune})`]:[]),
+                            ...(form.autoimmune==='АИТ'?['эндокринолог (АИТ)']:[]),
+                            ...(form.thrombosis==='Да'?['гематолог (тромбоз)']:[]),
+                            ...(Number(form.miscarriages)>=2&&form.thrombosis!=='Да'?['гематолог (невынашивание)']:[]),
+                            ...(form.migraine==='С аурой'||form.migraine==='Возможная'?['невролог']:[]),
+                          ].join(', ')}`}
                         </p>
                       </div>
                       <div>
